@@ -6,7 +6,6 @@ import { auth } from "../../firebase";
 function Profile() {
   const [authUser, setAuthUser] = useState<any>(null);
   const { user } = useUserAuth();
-  console.log("Profile", user);
 
   useEffect(() => {
     auth.onAuthStateChanged((user) => {
@@ -25,7 +24,6 @@ function Profile() {
           <Card.Title>Profile</Card.Title>
           <Card.Text>
             <p>Name: {user?.displayName}</p>
-            <p>Username: {user?.username}</p>
             <p>Role: {user?.role}</p>
             <p>Email: {authUser?.email}</p>
           </Card.Text>

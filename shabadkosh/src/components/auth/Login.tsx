@@ -7,17 +7,14 @@ import { useUserAuth } from "../UserAuthContext";
 import { GoogleAuthProvider, signInWithRedirect } from "firebase/auth";
 import { auth } from "../../firebase";
 import { checkUser } from "../util/users";
-import { useDispatch, useSelector } from "react-redux";
 import { setUser } from "../../store/actions/authActions";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const { logIn } = useUserAuth();
+  const { logIn, user } = useUserAuth();
   const navigate = useNavigate();
-  const state = useSelector((state: any) => state);
-  const dispatch = useDispatch();
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
@@ -29,7 +26,6 @@ const Login = () => {
       const userDetails = localStorage.getItem("user");
       if (userDetails) {
         const user = JSON.parse(userDetails);
-        dispatch(setUser(user));
       }
       await logIn(email, password);
       navigate("/home");
@@ -54,7 +50,7 @@ const Login = () => {
   return (
     <div className="container">
       <div className="p-4 box d-flex flex-column align-items-center">
-        <h2 className="mb-3">Shabadkosh Login - {state.user?.name}</h2>
+        <h2 className="mb-3">Shabadkosh Login - {user?.name}</h2>
         {error && <Alert variant="danger">{error}</Alert>}
         <Form onSubmit={handleSubmit}>
           <Form.Group className="mb-3" controlId="formBasicEmail">
@@ -88,9 +84,9 @@ const Login = () => {
           />
         </div> */}
         <Card className="p-4 box mt-3 text-center" style={{width: '50%'}}>
-          Do not have an account?<br/>
-          Ask the admin to get access.
-          {/* <Link to="/signup">Sign up</Link> */}
+          Contact the admin to get reviewer/admin access.<br/>
+          Do not have an account?
+          <Link to="/signup">Sign up</Link>
         </Card>
       </div>
     </div>

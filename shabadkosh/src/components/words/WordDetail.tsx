@@ -4,7 +4,7 @@ import { Breadcrumb, Button, ButtonGroup, Card, ListGroup } from "react-bootstra
 import { useNavigate, useParams } from "react-router-dom";
 import { firestore } from "../../firebase";
 import { NewWordType } from "../../types/word";
-import { deleteWord, questionsCollection, sentencesCollection } from "../util/controller";
+import { deleteWord, questionsCollection, reviewWord, sentencesCollection } from "../util/controller";
 import { NewSentenceType } from "../../types/sentence";
 import { TimestampType } from "../../types/timestamp";
 import { NewQuestionType } from "../../types/question";
@@ -30,6 +30,7 @@ function WordDetail() {
       nanoseconds: 0,
     },
     created_by: "",
+    updated_by: ""
   });
   const [ sentences, setSentences ] = useState<NewSentenceType[]>([]);
   const [ questions, setQuestions ] = useState<NewQuestionType[]>([]);
@@ -44,6 +45,7 @@ function WordDetail() {
           created_at: docSnap.data().created_at,
           updated_at: docSnap.data().updated_at,
           created_by: docSnap.data().created_by,
+          updated_by: docSnap.data().updated_by,
           ...docSnap.data(),
         };
         setWord(newWordObj);
@@ -100,13 +102,24 @@ function WordDetail() {
 
   const editUrl = `/edit/${wordid}`;
   const delWord = (word: any) => {
-    const response = confirm(`Are you sure you to delete this word: ${word.word}? \n This action is not reversible.`);
+    const response = confirm(`Are you sure you want to delete this word: ${word.word}? \n This action is not reversible.`);
     if (response) {
       const getWord = doc(firestore, `words/${word.id}`);
       deleteWord(getWord).then(() => {
         alert("Word deleted!");
         navigate('/words');
-        // console.log(`Deleted word with id: ${word.id}!`);
+      });
+    } else {
+      console.log("Operation abort!");
+    }
+  }
+  const revWord = (word: NewWordType) => {
+    const response = confirm(`Are you sure you want to approve this word: ${word.word}?`);
+    if (response) {
+      const getWord = doc(firestore, `words/${word.id}`);
+      reviewWord(getWord, word).then(() => {
+        alert("Word approved!");
+        navigate('/words');
       });
     } else {
       console.log("Operation abort!");
@@ -132,6 +145,8 @@ function WordDetail() {
       <ButtonGroup style={{ display: 'flex' ,width: '150px', alignSelf: 'end'}}>
         <Button href={editUrl}>Edit</Button>
         <Button onClick={() => delWord(word)} variant="danger" hidden={user?.role != "admin"}>Delete</Button>
+        {user?.role == "reviewer" ? <Button onClick={() => revWord(word)} variant="success" hidden={word.status != "created"}>Approve</Button> : null}
+        
       </ButtonGroup>
 
       {/* check if word != {} */}
@@ -229,6 +244,7 @@ function WordDetail() {
           <div className="d-flex justify-content-between flex-column">
             <h6>Created by: {word.created_by ? word.created_by : 'Unknown' }</h6>
             <h6>Created at: {convertTimestampToDate(word.created_at)}</h6>
+            <h6>Last updated by: {word.updated_by}</h6>
             <h6>Last updated: {convertTimestampToDate(word.updated_at)}</h6>
           </div>
         </div>

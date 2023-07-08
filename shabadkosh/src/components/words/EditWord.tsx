@@ -10,15 +10,7 @@ import { auth, firestore } from "../../firebase";
 import { NewQuestionType } from "../../types/question";
 import { TimestampType } from "../../types/timestamp";
 import { NewWordType } from "../../types/word";
-
-const status = {
-  "creating": "Creation in progress",
-  "created": "Created",
-  // "reviewing": "Review in progress",
-  // "reviewed": "Reviewed",
-  // "active": "Active",
-  // "inactive": "Inactive"
-};
+import { useUserAuth } from "../UserAuthContext";
 
 const types = ['context', 'image', 'meaning', 'definition'];
 
@@ -54,12 +46,33 @@ const EditWord = () => {
       nanoseconds: 0,
     },
     created_by: "",
+    updated_by: ""
   });
   const [ sentences, setSentences ] = useState<NewSentenceType[]>([]);
   const [formValues, setFormValues] = useState({} as any);
   const [questions, setQuestions] = useState<NewQuestionType[]>([]);
   const [validated, setValidated] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const {user} = useUserAuth();
+
+  let status = {
+    "creating": "Creation in progress",
+    "created": "Created"
+  } as Object;
+  if (user.role == "admin") {
+    status = {
+      ...status,
+      "reviewing": "Review in progress",
+      "reviewed": "Reviewed",
+      "active": "Active",
+      "inactive": "Inactive"
+    }
+  } else if (user.role == "reviewer") {
+    status = {
+      "reviewing": "Review in progress",
+      "reviewed": "Reviewed"
+    }
+  }
 
   useEffect(() => {
     const fetchWord = async () => {
@@ -71,6 +84,7 @@ const EditWord = () => {
           created_at: docSnap.data().created_at,
           updated_at: docSnap.data().updated_at,
           created_by: docSnap.data().created_by,
+          updated_by: docSnap.data().updated_by,
           ...docSnap.data(),
         };
         setWord(newWordObj);
@@ -357,10 +371,6 @@ const EditWord = () => {
   const handleSubmit = (e: any) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    console.log("Form Values: ", formValues);
-    console.log("Sentences: ", sentences);
-    console.log("Questions: ", questions);
 
     const form = e.currentTarget;
     if (form.checkValidity() === false) {
@@ -381,7 +391,7 @@ const EditWord = () => {
 
     formData['sentences'] = sentences;
     formData['questions'] = questions;
-    console.log("Minor change? :", formData);
+
     editWord(formData);
   }
 
@@ -414,10 +424,11 @@ const EditWord = () => {
         synonyms: splitAndClear(form.synonyms) ?? [],
         antonyms: splitAndClear(form.antonyms) ?? [],
         images: splitAndClear(form.images) ?? [],
-        status: form.status ?? "creating",
+        status: form.status,
         created_at: Timestamp.now(),
         updated_at: Timestamp.now(),
-        created_by: auth.currentUser?.email,
+        created_by: form.created_by,
+        updated_by: auth.currentUser?.email ?? "",
         notes: form.notes ?? ''
     })
     .then(() => {

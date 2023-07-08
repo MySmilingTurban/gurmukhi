@@ -1,5 +1,6 @@
-import { DocumentReference, addDoc, collection, deleteDoc, getDocs, setDoc } from "firebase/firestore";
+import { DocumentReference, addDoc, collection, deleteDoc, documentId, getDocs, query, setDoc, where } from "firebase/firestore";
 import {firestore as db} from "../../firebase";
+import { NewWordType } from "../../types/word";
 
 export default db; 
 
@@ -14,7 +15,7 @@ export const addWord = async (wordData: any) => {
 }
 
 // update word in words collection
-export const updateWord = async (word: DocumentReference, wordData: any) => {
+export const updateWord = async (word: DocumentReference, wordData: NewWordType) => {
     const updatedWord = await setDoc(word, {...wordData});
     // console.log(`Word updated with ID: ${updatedWord}`);
     return updatedWord;
@@ -33,6 +34,25 @@ export const getWords = async () => {
         words.push({...doc.data(), id: doc.id});
     });
     return words;
+}
+
+// set word status as reviewed
+export const reviewWord = async (word: DocumentReference, wordData: NewWordType) => {
+    const revWord = await setDoc(word, {...wordData, status: "reviewed"});
+    return revWord;
+}
+
+// get word from a list of word ids
+interface Word {
+    id: string;
+    word: string;
+}
+export const getWordsByIdList = async (idList: string[]) => {
+    if (idList.length > 0) {
+        const q = query(wordsCollection, where(documentId(), "in", idList));
+        const result = await getDocs(q);
+        return result.docs;
+    }
 }
 
 // Sentences collection
@@ -110,6 +130,11 @@ export const updateWordlist = async (wordlist: DocumentReference, wordlistData: 
     const updatedWordlist = await setDoc(wordlist, {...wordlistData});
     console.log('Updated Wordlist!');
     return updatedWordlist;
+}
+
+export const deleteWordlist = async (wordlist: DocumentReference) => {
+    const delWordlist = await deleteDoc(wordlist);
+    return delWordlist;
 }
 
 export const usersCollection = collection(db, "users");

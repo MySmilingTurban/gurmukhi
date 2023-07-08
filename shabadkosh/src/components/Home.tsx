@@ -1,12 +1,14 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { Button, Card } from "react-bootstrap";
 import { useNavigate } from "react-router";
 import { useUserAuth } from "./UserAuthContext";
-import { auth } from "../firebase";
 
 const Home = (props: any) => {
-  console.log("props: ", props);
-  const { user, logOut } = useUserAuth();
+  const { logOut, user } = useUserAuth();
+  // if (user) {
+  //   console.log("User: ", user);
+  //   console.log("Authy: ", auth.currentUser?.uid);
+  // }
   const navigate = useNavigate();
   const handleLogout = async () => {
     try {
@@ -16,8 +18,6 @@ const Home = (props: any) => {
       console.log(error.message);
     }
   };
-
-  console.log("User in Home: ", user);
 
   return (
     <div className="container p-4">

@@ -3,13 +3,13 @@ import { User } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { SignOutUser, userStateListener } from "../firebase";
 import { createContext, useState, useEffect, ReactNode } from "react";
-import { checkUser, getUser } from "../components/util/users";
+import { getUser } from "../components/util/users";
 
 interface ChildrenProps {
   children?: ReactNode
 }
 
-interface LocalUser {
+export interface LocalUser {
   user: User | null,
   uid?: string,
   email?: string,
@@ -37,17 +37,17 @@ export const AuthProvider = ({ children }: ChildrenProps) => {
         const userData = getUser(email ?? "", uid)
         .then((data) => 
           {
-            if (!data) console.log("Invalid user");
-            else console.log("Valid user");
-            setCurrentUser({
+            // if (!data) console.log("Invalid user");
+            // else console.log("Valid user");
+            const userData = {
               user,
               uid,
               email: data?.email,
               displayName: data?.name,
               photoURL: "",
               role: data?.role,
-              username: data?.username
-            })
+            };
+            setCurrentUser(userData);
         })
       }
     });

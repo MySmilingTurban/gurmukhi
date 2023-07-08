@@ -18,6 +18,7 @@ const AddWordlist = () => {
     const [submitted, setSubmitted] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [words, setWords] = useState<Word[]>([]);
+    const [selectedWords, setSelectedWords] = useState<Word[]>([]);
     const {user} = useUserAuth();
 
     useEffect(() => {
@@ -46,6 +47,16 @@ const AddWordlist = () => {
         setFormValues({ ...formValues, [e.target.id]: e.target.value });
     }
 
+    const onSelect = (selectedList: [], selectedItem: any) => {
+      console.log("Selected list: ", selectedList, ", selected item: ", selectedItem);
+      setSelectedWords(selectedList);
+    }
+
+    const onRemove = (selectedList: [], removedItem: any) => {
+      console.log("Selected list: ", selectedList, ", removed item: ", removedItem);
+      setSelectedWords(selectedList);
+    }
+
     const handleSubmit = (e: any) => {
         e.preventDefault();
         e.stopPropagation();
@@ -53,23 +64,19 @@ const AddWordlist = () => {
         console.log("Form Values: ", formValues);
 
         const form = e.currentTarget;
-        console.log("target : ", form);
         if (form.checkValidity() === false) {
             setValidated(true);
             return;
         }
 
         console.log("Validated!");
+        let formData = {
+          ...formValues,
+          words: selectedWords.map((ele) => ele.id)
+        }
 
-        // const formData = {} as any;
-        // Object.keys(formValues).map((ele) => {
-        // if (!ele.match(/sentence\d+/) && !ele.match(/translation\d+/) && !ele.match(/question\d+/) && !ele.match(/type\d+/) && !ele.match(/options\d+/) && !ele.match(/answer\d+/)) {
-        //     formData[ele] = formValues[ele];
-        // }
-        // });
-
-        // console.log("Form data: ", formData);
-        // addWordlist(formData);
+        console.log("Form data: ", formData);
+        addWordlist(formData);
     }
 
     /*
@@ -99,23 +106,22 @@ const AddWordlist = () => {
     }
 
     // connect the below function and call in handleSubmit
-    const addWordList = (formData: any) => {
+    const addWordlist = (formData: any) => {
         setIsLoading(true);
-        const {sentences, questions, ...form} = formData;
-
         addNewWordlist({
-          name: form.name,
-          status: form.status,
+          name: formData.name,
+          status: formData.status ?? "active",
           metadata: {
-            curriculum: form.curriculum,
-            level: form.level,
-            subgroup: form.subgroup
+            curriculum: formData.curriculum ?? "",
+            level: formData.level ?? "",
+            subgroup: formData.subgroup ?? ""
           },
-          words: form.words,
+          words: formData.words ?? [],
           created_at: Timestamp.now(),
+          created_by: user.username,
           updated_at: Timestamp.now(),
-          created_by: user.name,
-          notes: form.notes
+          updated_by: user.username,
+          notes: formData.notes ?? ""
         })
         .then((wordlist_id) => {
           console.log("Wordlist created with ID: ", wordlist_id)
@@ -174,7 +180,7 @@ const AddWordlist = () => {
 
             <Form.Group className="mb-3" controlId="status" onChange={handleChange}>
               <Form.Label>Status</Form.Label>
-              <Form.Select aria-label="Default select example">
+              <Form.Select aria-label="Default select example" defaultValue={"active"}>
                 {['active', 'inactive'].map((ele, idx) => {
                   return (
                     <option key={ele} value={ele}>{ele}</option>
@@ -184,12 +190,14 @@ const AddWordlist = () => {
             </Form.Group>
 
     
-            <Form.Group className="mb-3" controlId="words" onChange={handleChange}>
+            <Form.Group className="mb-3" controlId="words" >
               <Form.Label>Words</Form.Label>
               <Multiselect 
                 options={words}
                 displayValue="word"
                 showCheckbox={true}
+                onSelect={onSelect}
+                onRemove={onRemove}
               />
             </Form.Group>
 

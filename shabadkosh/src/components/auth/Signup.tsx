@@ -3,10 +3,11 @@ import { Link, useNavigate } from "react-router-dom";
 import { Form, Alert } from "react-bootstrap";
 import { Button } from "react-bootstrap";
 import { useUserAuth } from "../UserAuthContext";
+import { checkIfEmailUnique, checkIfUsernameUnique } from "../util/users";
 
 const Signup = () => {
-  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
+  const [diplayName, setDisplayName] = useState("");
   const [error, setError] = useState("");
   const [password, setPassword] = useState("");
   const { signUp } = useUserAuth();
@@ -16,27 +17,52 @@ const Signup = () => {
     e.preventDefault();
     setError("");
     try {
-      await signUp(username, email, password);
-      navigate("/");
+      const role = "creator";
+      await checkIfEmailUnique(email).then(async (unique) => {
+        if (unique) {
+          await signUp(diplayName, role, email, password).then((val: any) => {
+            console.log("val: ", val);
+            if (val) {
+              navigate("/home");
+            }
+          });
+        } else {
+          setError("Username already exists!");
+        }
+      })
+
     } catch (err: any) {
       setError(err.message);
     }
   };
+
   return (
     <>
       <div className="p-4 box">
-        <h2 className="mb-3">Firebase Auth Signup</h2>
+        <h2 className="mb-3">Shabadavali Signup</h2>
         {error && <Alert variant="danger">{error}</Alert>}
         <Form onSubmit={handleSubmit}>
-        <Form.Group className="mb-3" controlId="formBasicUsername">
+          <Form.Group className="mb-3" controlId="formBasicName">
+            <Form.Label>Full name</Form.Label>
             <Form.Control
-              type="username"
-              placeholder="Username"
-              onChange={(e) => setUsername(e.target.value)}
+              type="name"
+              placeholder="Name"
+              onChange={(e) => setDisplayName(e.target.value)}
+            />
+          </Form.Group>
+
+          <Form.Group className="mb-3" controlId="formBasicRole">
+            <Form.Label>Role</Form.Label>
+            <Form.Control
+              type="role"
+              placeholder="Role"
+              defaultValue="Creator"
+              disabled={true}
             />
           </Form.Group>
 
           <Form.Group className="mb-3" controlId="formBasicEmail">
+            <Form.Label>Email</Form.Label>
             <Form.Control
               type="email"
               placeholder="Email address"
@@ -45,6 +71,7 @@ const Signup = () => {
           </Form.Group>
 
           <Form.Group className="mb-3" controlId="formBasicPassword">
+            <Form.Label>Password</Form.Label>
             <Form.Control
               type="password"
               placeholder="Password"

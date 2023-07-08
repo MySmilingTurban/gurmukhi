@@ -17,7 +17,7 @@ const Search = () => {
 
   const handleSearch = async (event: any) => {
     event.preventDefault();
-    console.log("query", query);
+    // console.log("query", query);
   };
 
   useEffect(() => {
@@ -25,17 +25,17 @@ const Search = () => {
       if (query === "") {
         setFilteredWords(words);
       } else if (query.match("[\u0A00-\u0A76,. ]+")) {
-        console.log("Gurmukhi" , query);
-        console.log("words", words);
+        // console.log("Gurmukhi" , query);
+        // console.log("words", words);
 
         let filteredWords = words.filter((word) => word.word?.includes(query));
-        console.log("filteredWords", filteredWords);
+        // console.log("filteredWords", filteredWords);
         setFilteredWords(filteredWords);
       } else if (query.match("[a-zA-Z]+")) {
-        console.log("English", query);
+        // console.log("English", query);
         
         let filteredWords = words.filter((word) => word.translation?.includes(query));
-        console.log("filteredWords", filteredWords);
+        // console.log("filteredWords", filteredWords);
         setFilteredWords(filteredWords);
       } else {
         console.log(query);
@@ -47,13 +47,14 @@ const Search = () => {
     setIsLoading(true);
     onSnapshot(wordsCollection, (snapshot:
       QuerySnapshot<DocumentData>) => {
-      console.log("snapshot", snapshot);
+      // console.log("snapshot", snapshot);
       const data = snapshot.docs.map((doc) => {
           return {
             id: doc.id,
             created_at: doc.data().created_at,
             updated_at: doc.data().updated_at,
             created_by: doc.data().created_by,
+            updated_by: doc.data().updated_by,
             ...doc.data(),
           };
         });

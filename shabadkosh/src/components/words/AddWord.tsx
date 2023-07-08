@@ -14,7 +14,7 @@
 // }
 
 // const status : Object = {
-//   "creating": "Creation in progress",
+//   updng": "Creation in progress",
 //   "created": "Created",
 //   // "reviewing": "Review in progress",
 //   // "reviewed": "Reviewed",
@@ -243,7 +243,7 @@
 import React, { useState } from "react";
 import { Button, Card, Form, FormControlProps } from "react-bootstrap";
 import { NewSentenceType } from "../../types/sentence";
-import { Navigate, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { addQuestion, addSentence, addWord } from "../util/controller";
 import { Timestamp } from "firebase/firestore";
 import { auth } from "../../firebase";
@@ -538,6 +538,7 @@ const AddWord = () => {
       created_at: Timestamp.now(),
       updated_at: Timestamp.now(),
       created_by: auth.currentUser?.email,
+      updated_by: auth.currentUser?.email,
     })
     .then((word_id) => {
       // use return value of addWord to add sentences

@@ -1,5 +1,4 @@
-// import { app } from "./firebase";
-import React, { useState } from "react";
+import React from "react";
 import NavBar from "./components/NavBar";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { UserAuthContextProvider } from "./components/UserAuthContext";
@@ -13,22 +12,20 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "./components/Home";
 import Search from "./components/Search";
 import Profile from "./components/user/Profile";
-import Settings from "./components/user/Settings";
 import ViewDictionary from "./components/words/ViewDictionary";
 import WordDetail from "./components/words/WordDetail";
 import AddWord from "./components/words/AddWord";
 import EditWord from "./components/words/EditWord";
-import DeleteWord from "./components/words/DeleteWord";
-import ReviewWord from "./components/words/ReviewWord";
 import Users from "./components/user/Users";
-import CreateUser from "./components/user/CreateUser";
 import AddWordlist from "./components/wordlists/AddWordlist";
 import Wordlists from "./components/wordlists/Wordlists";
 import EditWordlist from "./components/wordlists/EditWordlist";
 import ViewWordlist from "./components/wordlists/ViewWordlist";
+import { useSelector } from "react-redux";
+import { UserState } from "./store/reducers/authReducer";
 
 function App() {
-  const [editWord, setEditWord] = useState<any>({});
+  const state = useSelector((state: UserState) => state.auth);
   return (
     <div className="App">
       <UserAuthContextProvider>
@@ -82,14 +79,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/users/create"
-            element={
-              <ProtectedRoute>
-                <CreateUser />
-              </ProtectedRoute>
-            }
-          />
           {/* <Route
             path="/settings"
             element={
@@ -131,22 +120,6 @@ function App() {
             element={
               <ProtectedRoute>
                 <EditWord />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/reviewword"
-            element={
-              <ProtectedRoute>
-                <ReviewWord />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/deleteword"
-            element={
-              <ProtectedRoute>
-                <DeleteWord />
               </ProtectedRoute>
             }
           />

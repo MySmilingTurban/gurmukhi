@@ -3,10 +3,8 @@ import React, { useEffect, useState } from "react";
 import { Form, Button } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router-dom";
 import { auth, firestore } from "../../firebase";
-import { NewQuestionType } from "../../types/question";
-import { NewSentenceType } from "../../types/sentence";
 import { useUserAuth } from "../UserAuthContext";
-import { addWord, addSentence, addQuestion, wordsCollection, updateWordlist } from "../util/controller";
+import { wordsCollection, updateWordlist } from "../util/controller";
 import {Multiselect} from 'multiselect-react-dropdown';
 
 interface Word {
@@ -24,26 +22,25 @@ const EditWordlist = () => {
     const [ found, setFound ] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [wordlist, setWordlist] = useState<any>({});
-    const [words, setWords] = useState<Word[]>([]);
+    const [words, setWords] = useState<any>([]);
     const [selectedWords, setSelectedWords] = useState<Word[]>([]);
     const {user} = useUserAuth();
 
 
     useEffect(() => {
+      let localWordlist = [] as Word[];
       const fetchWords = async () => {
         setIsLoading(true);
         onSnapshot(wordsCollection, (snapshot:
         QuerySnapshot<DocumentData>) => {
-          console.log("snapshot", snapshot);
-          setWords(
-              snapshot.docs.map((doc) => {
-              return {
-                  id: doc.id,
-                  word: doc.data().word,
-              };
-              })
-          );
-          console.log("Words: ", words)
+          const allWords = snapshot.docs.map((doc) => {
+            return {
+                id: doc.id,
+                word: doc.data().word,
+            } as Word;
+          })
+          localWordlist = allWords;
+          setWords(allWords);
         });
 
         setIsLoading(false);
@@ -59,12 +56,17 @@ const EditWordlist = () => {
                 created_by: docSnap.data().created_by,
                 ...docSnap.data(),
             } as any;
-            let wlist = docSnap.data().words.map((ele: string) => 
-              words.filter((val) => val.id == ele)[0]
+            console.log("Wordlist: ", newWordObj.words);
+            let wlist = newWordObj.words.map((ele: string) =>
+              {
+                console.log("element form wlist: ", ele, words, localWordlist);
+                return localWordlist.filter((val: Word) => val.id == ele)[0]
+              } 
             );
             newWordObj['words'] = wlist;
             console.log("Wlist: ", wlist);
             setWordlist(newWordObj);
+            setSelectedWords(wlist);
             fillFormValues(newWordObj);
             setIsLoading(false);
           } else {
@@ -74,8 +76,13 @@ const EditWordlist = () => {
           }
       };
       fetchWords();
+      console.log("Words: ", words);
       fetchWordlist();
     }, []);
+
+    // useEffect(() => {
+    //   console.log("Words from state: ", words);
+    // }, [words])
 
     const fillFormValues = (wordlist: any) => {
         const formVal = {} as any;
@@ -94,6 +101,18 @@ const EditWordlist = () => {
         setFormValues({ ...formValues, [e.target.id]: e.target.value });
     }
 
+    const onSelect = (selectedList: [], selectedItem: any) => {
+      console.log("Selected list: ", selectedList, ", selected item: ", selectedItem);
+      setSelectedWords(selectedList);
+      setWordlist({...wordlist, words: selectedList});
+    }
+
+    const onRemove = (selectedList: [], removedItem: any) => {
+      console.log("Selected list: ", selectedList, ", removed item: ", removedItem);
+      setSelectedWords(selectedList);
+      setWordlist({...wordlist, words: selectedList});
+    }
+
     const handleSubmit = (e: any) => {
         e.preventDefault();
         e.stopPropagation();
@@ -107,27 +126,27 @@ const EditWordlist = () => {
         }
 
         console.log('Validated!')
-
-        // editWordlist(formValues);
-    }
-
-    /*
-    Collection: WordLists
-        {
-        "wordlist_id": <wordlist_id>,
-        "name": <name>,
-        "words": [<word_id_1>, <word_id_2>, ...],
-        "metadata": {
-            "level": <level>,
-            "curriculum": <curriculum>,
-                "subgroup": <subgroup>
-        },
-        "status": <status>,
-        "created_by": <user_id>,
-        "created_at": <timestamp>,
-        "updated_at": <timestamp>
+        let formData = {
+          id: formValues.id,
+          name: formValues.name,
+          status: formValues.status,
+          words: selectedWords.map((ele) => ele.id),
+          metadata: {
+            curriculum: formValues.curriculum ?? formValues.metadata.curriculum,
+            level: formValues.level ?? formValues.metadata.level,
+            subgroup: formValues.subgroup ?? formValues.metadata.subgroup,
+          },
+          created_by: formValues.created_by,
+          created_at: formValues.created_at,
+          updated_by: auth.currentUser?.email,
+          updated_at: Timestamp.now(),
+          notes: formValues.notes,
         }
-     */
+
+        // console.log("Form data: ", formData);
+
+        editWordlist(formData);
+    }
 
     const splitAndClear = (some: any) => {
         if (!some) return [];
@@ -140,13 +159,10 @@ const EditWordlist = () => {
     // connect the below function and call in handleSubmit
     const editWordlist = (formData: any) => {
         setIsLoading(true);
-        const {sentences, questions, ...form} = formData;
 
         updateWordlist(getWordlist, {...formData})
-        .then((word_id) => {
-
-        }).finally(() => {
-        setIsLoading(false);
+        .finally(() => {
+          setIsLoading(false);
         });
 
         resetState();
@@ -213,14 +229,16 @@ const EditWordlist = () => {
               <Multiselect 
                 options={words}
                 displayValue="word"
-                selectedValues={wordlist.words ?? []}
                 showCheckbox={true}
+                onSelect={onSelect}
+                onRemove={onRemove}
+                selectedValues={wordlist.words ?? []}
               />
             </Form.Group>
 
-            <Form.Group className="mb-3" controlId="notes" defaultValue={wordlist.notes} onChange={handleChange}>
+            <Form.Group className="mb-3" controlId="notes" onChange={handleChange}>
               <Form.Label>Notes</Form.Label>
-              <Form.Control as="textarea" rows={3} placeholder="Enter notes" />
+              <Form.Control as="textarea" rows={3} defaultValue={wordlist.notes} placeholder="Enter notes" />
             </Form.Group>
     
             <Button variant="primary" type="submit">
@@ -229,9 +247,9 @@ const EditWordlist = () => {
           </Form>
           {submitted ? <div className="d-flex justify-content-center align-items-center background">
             <div className="rounded p-4 p-sm-3">
-              <h3>Successfully added a new word!</h3>
-              <Button variant="primary" onClick={unsetSubmitted}>Add another word</Button>
-              <Button variant="primary" onClick={() => navigate('/home')}>Back to Home</Button>
+              <h3>Successfully updated wordlist!</h3>
+              {/* <Button variant="primary" onClick={unsetSubmitted}>Add another word</Button> */}
+              <Button variant="primary" onClick={() => navigate('/wordlists')}>Back to Wordlists</Button>
             </div>
           </div> : null}
         </div>

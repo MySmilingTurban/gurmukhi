@@ -14,5 +14,6 @@ export interface NewWordType {
     created_at: TimestampType,
     created_by: string,
     updated_at: TimestampType,
+    updated_by: string,
     notes?: string,
 }

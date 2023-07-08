@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Form, Alert } from "react-bootstrap";
 import { Button } from "react-bootstrap";
 import { useUserAuth } from "../UserAuthContext";
+// import { createUser } from "../../firebase-admin";
 
 const CreateUser = () => {
   const [username, setUsername] = useState("");
@@ -29,7 +30,7 @@ const CreateUser = () => {
     e.preventDefault();
     setError("");
     try {
-      await signUp(username, name, role, email, password);
+      // await createUser(email, password, name, role, username);
       navigate("/users");
     } catch (err: any) {
       setError(err.message);

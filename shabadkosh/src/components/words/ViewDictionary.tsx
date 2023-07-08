@@ -12,7 +12,7 @@ function ViewDictionary() {
   const [listView, setListView] = useState<boolean>(false);
   const [words, setWords] = useState<NewWordType[]>([]);
   const [filteredWords, setFilteredWords] = useState<NewWordType[]>([]);
-  const { user } = useUserAuth();
+  const {user} = useUserAuth();
 
   const handleSearch = async (event: any) => {
     event.preventDefault();
@@ -20,26 +20,25 @@ function ViewDictionary() {
   };
 
   useEffect(() => {
-    if (filteredWords) {
-      // console.log("query", query);
-      if (query === "") {
-        setFilteredWords(sortWords(words));
-      } else if (query.match("[\u0A00-\u0A76,.]+")) {
-        // console.log("Gurmukhi" , query);
+    console.log("query", query);
+    if (query === "") {
+      setFilteredWords(sortWords(words));
+    } else if (query.match("[\u0A00-\u0A76,.]+")) {
+      // console.log("Gurmukhi" , query);
 
-        let filteredWords = words.filter((word) => word.word?.includes(query));
-        // console.log("filteredWords", filteredWords);
-        setFilteredWords(sortWords(filteredWords));
-      } else if (query.match("[a-zA-Z \s]+")) {
-        // console.log("English", query);
-        
-        let filteredWords = words.filter((word) => word.translation?.toLowerCase().includes(query));
-        // console.log("filteredWords", filteredWords);
-        setFilteredWords(sortWords(filteredWords));
-      } else {
-        // console.log(query);
-      }
+      let filteredWords = words.filter((word) => word.word?.includes(query));
+      console.log("filteredWords", filteredWords);
+      setFilteredWords(sortWords(filteredWords));
+    } else if (query.match("[a-zA-Z \s]+")) {
+      // console.log("English", query);
+      
+      let filteredWords = words.filter((word) => word.translation?.toLowerCase().includes(query));
+      console.log("filteredWords", filteredWords);
+      setFilteredWords(sortWords(filteredWords));
+    } else {
+      // console.log(query);
     }
+
   }, [query]);
 
   useEffect(() => {
@@ -53,6 +52,7 @@ function ViewDictionary() {
             created_at: doc.data().created_at,
             updated_at: doc.data().updated_at,
             created_by: doc.data().created_by,
+            updated_by: doc.data().updated_by,
             ...doc.data(),
           };
         });
@@ -88,7 +88,7 @@ function ViewDictionary() {
   // console.log("Sorted words: ", sortedWords);
 
   const delWord = (word: any) => {
-    const response = confirm(`Are you sure you to delete this word: ${word.word}? \n This action is not reversible.`);
+    const response = confirm(`Are you sure you want to delete this word: ${word.word}? \n This action is not reversible.`);
     if (response) {
       const getWord = doc(firestore, `words/${word.id}`);
       deleteWord(getWord).then(() => {
@@ -100,55 +100,58 @@ function ViewDictionary() {
     }
   }
 
-  const wordsData = sortWords(filteredWords)?.map((word) => {
-    const detailUrl = `/words/${word.id}`;
-    const editUrl = `/edit/${word.id}`;
-    let punjabiMeaning = word.meaning_punjabi && word.meaning_punjabi.length > 0 ? (word.meaning_punjabi[-1] !== "।" ? word.meaning_punjabi + "।" : word.meaning_punjabi) : "";
-    let englishMeaning = word.meaning_english && word.meaning_english.length > 0 ? (word.meaning_english[-1] !== "।" ? word.meaning_english + "." : word.meaning_english) : "";
-    if (listView) {
-      return (
-        <ListGroup.Item
-          key={word.id}
-          className="d-flex justify-content-between align-items-start"
-          style={{width: "80%"}}
-          >
-          <div className="ms-2 me-auto">
-            <h3 className="fw-bold">{word.word}</h3>
-            <p>{word.translation}</p>
-          </div>
-          <div className="d-flex flex-column align-items-end">
-            <ButtonGroup>
-              <Button href={detailUrl} style={{backgroundColor: "transparent", border: "transparent"}}>👁️</Button>
-              <Button href={editUrl} style={{backgroundColor: "transparent", border: "transparent"}}>🖊️</Button>
-              <Button onClick={() => delWord(word)} style={{backgroundColor: "transparent", border: "transparent"}} hidden={user?.role != "admin"}>🗑️</Button>
-            </ButtonGroup>
-            <Badge pill bg="primary" text="white" hidden={!word.status}>
-              {word.status}
-            </Badge>
-          </div>
-        </ListGroup.Item>
-      )
-    } else {
-      return  (
-        <Card className="p-2 wordCard" key={word.id} style={{ width: '20rem' }}>
-          <Card.Img variant="top" src={word.images && word.images.length ? word.images[0] : require("../../assets/nothing.jpeg")} onError={onError} />
-          <Card.Body>
-            <Card.Title>{word.word} ({word.translation})</Card.Title>
-            <Card.Text >
-                <b>Meaning: </b><br/>
-                &quot;{punjabiMeaning}&quot;<br/>
-                <i>{englishMeaning}</i>
-            </Card.Text>
-            <ButtonGroup>
-              <Button href={detailUrl} variant="success">View</Button>
-              <Button href={editUrl}>Edit</Button>
-              <Button onClick={() => delWord(word)} variant="danger" hidden={user?.role != "admin"}>Delete</Button>
-            </ButtonGroup>
-          </Card.Body>
-        </Card>
-      );
-    }
-  });
+  const wordsData = sortWords(filteredWords) && sortWords(filteredWords).length ? 
+    sortWords(filteredWords)?.map((word) => {
+      const detailUrl = `/words/${word.id}`;
+      const editUrl = `/edit/${word.id}`;
+      let punjabiMeaning = word.meaning_punjabi && word.meaning_punjabi.length > 0 ? (word.meaning_punjabi[-1] !== "।" ? word.meaning_punjabi + "।" : word.meaning_punjabi) : "";
+      let englishMeaning = word.meaning_english && word.meaning_english.length > 0 ? (word.meaning_english[-1] !== "।" ? word.meaning_english + "." : word.meaning_english) : "";
+      if (listView) {
+        return (
+          <ListGroup.Item
+            key={word.id}
+            className="d-flex justify-content-between align-items-start"
+            style={{width: "80%"}}
+            >
+            <div className="ms-2 me-auto">
+              <h3 className="fw-bold">{word.word}</h3>
+              <p>{word.translation}</p>
+            </div>
+            <div className="d-flex flex-column align-items-end">
+              <ButtonGroup>
+                <Button href={detailUrl} style={{backgroundColor: "transparent", border: "transparent"}}>👁️</Button>
+                <Button href={editUrl} style={{backgroundColor: "transparent", border: "transparent"}}>🖊️</Button>
+                <Button onClick={() => delWord(word)} style={{backgroundColor: "transparent", border: "transparent"}} hidden={user?.role != "admin"}>🗑️</Button>
+              </ButtonGroup>
+              <Badge pill bg="primary" text="white" hidden={!word.status}>
+                {word.status}
+              </Badge>
+            </div>
+          </ListGroup.Item>
+        )
+      } else {
+        return  (
+          <Card className="p-2 wordCard" key={word.id} style={{ width: '20rem' }}>
+            <Card.Img variant="top" src={word.images && word.images.length ? word.images[0] : require("../../assets/nothing.jpeg")} onError={onError} />
+            <Card.Body>
+              <Card.Title>{word.word} ({word.translation})</Card.Title>
+              <Card.Text >
+                  <b>Meaning: </b><br/>
+                  &quot;{punjabiMeaning}&quot;<br/>
+                  <i>{englishMeaning}</i>
+              </Card.Text>
+              <ButtonGroup>
+                <Button href={detailUrl} variant="success">View</Button>
+                <Button href={editUrl}>Edit</Button>
+                <Button onClick={() => delWord(word)} variant="danger" hidden={user?.role != "admin"}>Delete</Button>
+              </ButtonGroup>
+            </Card.Body>
+          </Card>
+        );
+      }
+    })
+    : 
+    <Card><Card.Body><h3>No words {user?.role == 'reviewer' ? "to review!" : "found!"}</h3></Card.Body></Card>;
 
   if (words.length === 0 || isLoading) return <h2>Loading...</h2>;
   return (
