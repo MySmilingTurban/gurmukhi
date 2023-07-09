@@ -22,7 +22,7 @@ import Wordlists from "./components/wordlists/Wordlists";
 import EditWordlist from "./components/wordlists/EditWordlist";
 import ViewWordlist from "./components/wordlists/ViewWordlist";
 import { useSelector } from "react-redux";
-import { UserState } from "./store/reducers/authReducer";
+import { UserState } from "./types/user";
 
 function App() {
   const state = useSelector((state: UserState) => state.auth);
