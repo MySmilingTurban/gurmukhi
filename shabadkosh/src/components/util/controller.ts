@@ -1,11 +1,11 @@
-import { DocumentReference, addDoc, collection, deleteDoc, documentId, getDocs, query, setDoc, where } from "firebase/firestore";
-import {firestore as db} from "../../firebase";
-import { NewWordType } from "../../types/word";
+import { DocumentReference, addDoc, collection, deleteDoc, documentId, getDocs, query, setDoc, where } from 'firebase/firestore';
+import {firestore as db} from '../../firebase';
+import { NewWordType } from '../../types/word';
 
 export default db; 
 
 // Words collection
-export const wordsCollection = collection(db, "words");
+export const wordsCollection = collection(db, 'words');
 
 // add new word to words collection
 export const addWord = async (wordData: any) => {
@@ -38,21 +38,21 @@ export const getWords = async () => {
 
 // set word status as reviewed
 export const reviewWord = async (word: DocumentReference, wordData: NewWordType) => {
-    const revWord = await setDoc(word, {...wordData, status: "reviewed"});
+    const revWord = await setDoc(word, {...wordData, status: 'reviewed'});
     return revWord;
 }
 
 // get word from a list of word ids
 export const getWordsByIdList = async (idList: string[]) => {
     if (idList.length > 0) {
-        const q = query(wordsCollection, where(documentId(), "in", idList));
+        const q = query(wordsCollection, where(documentId(), 'in', idList));
         const result = await getDocs(q);
         return result.docs;
     }
 }
 
 // Sentences collection
-export const sentencesCollection = collection(db, "sentences");
+export const sentencesCollection = collection(db, 'sentences');
 
 export const addSentence = async (sentenceData: any) => {
     const newSentence = await addDoc(sentencesCollection, {...sentenceData});
@@ -83,7 +83,7 @@ export const deleteSentenceByWordId = async (wordId: string) => {
 }
 
 // Questions collection
-export const questionsCollection = collection(db, "questions");
+export const questionsCollection = collection(db, 'questions');
 
 export const addQuestion = async (questionData: any) => {
     const newQuestion = await addDoc(questionsCollection, {...questionData});
@@ -114,7 +114,7 @@ export const deleteQuestionByWordId = async (wordId: string) => {
 }
 
 // Wordlists collection
-export const wordlistsCollection = collection(db, "wordlists");
+export const wordlistsCollection = collection(db, 'wordlists');
 
 export const addNewWordlist = async (wordlistData: any) => {
     const newWordlist = await addDoc(wordlistsCollection, {...wordlistData});
@@ -133,4 +133,4 @@ export const deleteWordlist = async (wordlist: DocumentReference) => {
     return delWordlist;
 }
 
-export const usersCollection = collection(db, "users");
+export const usersCollection = collection(db, 'users');

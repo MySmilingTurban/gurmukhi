@@ -18,6 +18,7 @@ const userAuthContext  = createContext<any>(null);
 
 export function UserAuthContextProvider({ children }: { children:JSX.Element }) {
   const [user, setUser] = useState({});
+  const navigate = useNavigate();
   function logIn(email: string, password: string) {
     return signInWithEmailAndPassword(auth, email, password);
   }
@@ -68,24 +69,28 @@ export function UserAuthContextProvider({ children }: { children:JSX.Element }) 
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentuser: any) => {
-      // console.log("Auth", currentuser);
-      const { uid, email, displayName, photoURL } = currentuser;
-      const userData = getUser(email ?? "", uid)
-        .then((data) => 
-          {
-            // if (!data) console.log("Invalid user");
-            // else console.log("Valid user");
-            const usr = {
-              user,
-              uid,
-              email: data?.email,
-              displayName: data?.name,
-              photoURL: "",
-              role: data?.role,
-            };
-            // console.log("usr: ", usr);
-            setUser(usr);
-        })
+      // console.log("Current user from UserAuthContext: ", currentuser);
+      if (currentuser === null) {
+        navigate('/')
+      } else {
+        const { uid, email, displayName, photoURL } = currentuser;
+        const userData = getUser(email ?? "", uid)
+          .then((data) => 
+            {
+              // if (!data) console.log("Invalid user");
+              // else console.log("Valid user");
+              const usr = {
+                user,
+                uid,
+                email: data?.email,
+                displayName: data?.name,
+                photoURL: "",
+                role: data?.role,
+              };
+              // console.log("usr: ", usr);
+              setUser(usr);
+          })
+      }
       setUser(currentuser);
     });
 

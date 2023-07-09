@@ -143,7 +143,7 @@ function ViewDictionary() {
               <ButtonGroup>
                 <Button href={detailUrl} variant="success">View</Button>
                 <Button href={editUrl}>Edit</Button>
-                <Button onClick={() => delWord(word)} variant="danger" hidden={user?.role != "admin"}>Delete</Button>
+                {user?.role === "admin" ? <Button onClick={() => delWord(word)} variant="danger" >Delete</Button> : null }
               </ButtonGroup>
             </Card.Body>
           </Card>

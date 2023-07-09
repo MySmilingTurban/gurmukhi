@@ -89,7 +89,7 @@ function ViewWordlist() {
                 <h2>{wordlist.name}</h2>
                 <ButtonGroup style={{ display: 'flex' ,width: '150px', alignSelf: 'end'}}>
                     <Button href={editUrl}>Edit</Button>
-                    <Button onClick={() => delWordlist(wordlist)} variant="danger" hidden={user?.role != "admin"}>Delete</Button>
+                    {user?.role === "admin" ? <Button onClick={() => delWordlist(wordlist)} variant="danger" >Delete</Button> : null}
                 </ButtonGroup>
                 <span className="badge bg-primary" style={{width: '6rem'}}>{wordlist.status}</span>
                 <br /><br />

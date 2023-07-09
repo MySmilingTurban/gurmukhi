@@ -37,11 +37,11 @@ const Signup = () => {
   };
 
   return (
-    <>
+    <div className="container justify-content-center">
       <div className="p-4 box">
         <h2 className="mb-3">Shabadavali Signup</h2>
         {error && <Alert variant="danger">{error}</Alert>}
-        <Form onSubmit={handleSubmit}>
+        <Form onSubmit={handleSubmit} style={{ width: '100%' }}>
           <Form.Group className="mb-3" controlId="formBasicName">
             <Form.Label>Full name</Form.Label>
             <Form.Control
@@ -86,10 +86,10 @@ const Signup = () => {
           </div>
         </Form>
       </div>
-      <div className="p-4 box mt-3 text-center">
+      <div className="p-4 box mt-3 text-center" style={{ backgroundColor: '#fff', width: '25%', justifyContent: 'center'}}>
         Already have an account? <Link to="/">Log In</Link>
       </div>
-    </>
+    </div>
   );
 };
 

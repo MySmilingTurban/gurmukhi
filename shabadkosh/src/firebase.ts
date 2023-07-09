@@ -1,6 +1,6 @@
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-import { getAnalytics } from "firebase/analytics";
+import { initializeApp } from 'firebase/app';
+import { getFirestore } from 'firebase/firestore';
+import { getAnalytics } from 'firebase/analytics';
 import { 
   getAuth,
   onAuthStateChanged,
@@ -8,8 +8,8 @@ import {
   signInWithEmailAndPassword,
   NextOrObserver,
   User
-} from "firebase/auth";
-import { getStorage } from "firebase/storage";
+} from 'firebase/auth';
+import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_apiKey,

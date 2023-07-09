@@ -1,31 +1,28 @@
-import React from "react";
-import NavBar from "./components/NavBar";
-import "bootstrap/dist/css/bootstrap.min.css";
-import { UserAuthContextProvider } from "./components/UserAuthContext";
-import { Route, Routes } from "react-router-dom";
-import Login from "./components/auth/Login";
-import Logout from "./components/auth/Logout";
-import Signup from "./components/auth/Signup";
-import About from "./components/About";
-import Contact from "./components/Contact";
-import ProtectedRoute from "./components/ProtectedRoute";
-import Home from "./components/Home";
-import Search from "./components/Search";
-import Profile from "./components/user/Profile";
-import ViewDictionary from "./components/words/ViewDictionary";
-import WordDetail from "./components/words/WordDetail";
-import AddWord from "./components/words/AddWord";
-import EditWord from "./components/words/EditWord";
-import Users from "./components/user/Users";
-import AddWordlist from "./components/wordlists/AddWordlist";
-import Wordlists from "./components/wordlists/Wordlists";
-import EditWordlist from "./components/wordlists/EditWordlist";
-import ViewWordlist from "./components/wordlists/ViewWordlist";
-import { useSelector } from "react-redux";
-import { UserState } from "./types/user";
+import React from 'react';
+import NavBar from './components/NavBar';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import { UserAuthContextProvider } from './components/UserAuthContext';
+import { Route, Routes } from 'react-router-dom';
+import Login from './components/auth/Login';
+import Logout from './components/auth/Logout';
+import Signup from './components/auth/Signup';
+import About from './components/About';
+import Contact from './components/Contact';
+import ProtectedRoute from './components/ProtectedRoute';
+import Home from './components/Home';
+import Search from './components/Search';
+import Profile from './components/user/Profile';
+import ViewDictionary from './components/words/ViewDictionary';
+import WordDetail from './components/words/WordDetail';
+import AddWord from './components/words/AddWord';
+import EditWord from './components/words/EditWord';
+import Users from './components/user/Users';
+import AddWordlist from './components/wordlists/AddWordlist';
+import Wordlists from './components/wordlists/Wordlists';
+import EditWordlist from './components/wordlists/EditWordlist';
+import ViewWordlist from './components/wordlists/ViewWordlist';
 
 function App() {
-  const state = useSelector((state: UserState) => state.auth);
   return (
     <div className="App">
       <UserAuthContextProvider>
@@ -165,7 +162,7 @@ function App() {
           <Route path="*" element={<h1>404 Not Found</h1>}/>
         </Routes>
         </div>
-      </UserAuthContextProvider>
+        </UserAuthContextProvider>
     </div>
   );
 }

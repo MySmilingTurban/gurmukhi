@@ -1,6 +1,6 @@
-import { User } from "firebase/auth";
-import { TimestampType } from "./timestamp";
-import { ReactNode } from "react";
+import { User } from 'firebase/auth';
+import { TimestampType } from './timestamp';
+import { ReactNode } from 'react';
 
 export interface NewUserType {
     id?: string,

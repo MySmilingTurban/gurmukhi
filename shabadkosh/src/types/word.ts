@@ -1,4 +1,4 @@
-import { TimestampType } from "./timestamp";
+import { TimestampType } from './timestamp';
 
 export interface NewWordType {
     id?: string,

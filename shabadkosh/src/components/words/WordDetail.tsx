@@ -144,7 +144,7 @@ function WordDetail() {
 
       <ButtonGroup style={{ display: 'flex' ,width: '150px', alignSelf: 'end'}}>
         <Button href={editUrl}>Edit</Button>
-        <Button onClick={() => delWord(word)} variant="danger" hidden={user?.role != "admin"}>Delete</Button>
+        {user?.role == "admin" ?<Button onClick={() => delWord(word)} variant="danger" hidden={user?.role != "admin"}>Delete</Button> : null}
         {user?.role == "reviewer" ? <Button onClick={() => revWord(word)} variant="success" hidden={word.status != "created"}>Approve</Button> : null}
         
       </ButtonGroup>

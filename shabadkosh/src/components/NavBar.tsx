@@ -38,7 +38,7 @@ const NavBar = (props: any) => {
                 <NavDropdown.Item href="/users" hidden={user?.role != 'admin'}>View Users</NavDropdown.Item>
                 {/* <NavDropdown.Item href="/settings">Settings</NavDropdown.Item> */}
                 <NavDropdown.Divider />
-                <NavDropdown.Item href="/login" hidden={user?.uid}>Login</NavDropdown.Item>
+                <NavDropdown.Item href="/login" hidden={user?.uid}>Log in</NavDropdown.Item>
                 <NavDropdown.Item href="/logout" hidden={!user?.uid}>Logout</NavDropdown.Item>
               </NavDropdown>
             </Nav>

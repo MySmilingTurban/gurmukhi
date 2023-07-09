@@ -20,5 +20,17 @@
       "react": {
         "version": "detect"
       }
-    }
+    },
+    "overrides": [
+      {
+        "files": ["**/*.+(ts|tsx)"],
+        "parserOptions": {
+          "ecmaVersion": 2021,
+          "ecmaFeatures": {
+            "jsx": true
+          },
+          "sourceType": "module"
+        }
+      }
+    ]
 }

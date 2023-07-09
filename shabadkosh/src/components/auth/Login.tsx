@@ -50,7 +50,7 @@ const Login = () => {
   return (
     <div className="container">
       <div className="p-4 box d-flex flex-column align-items-center">
-        <h2 className="mb-3">Shabadkosh Login - {user?.name}</h2>
+        <h2 className="mb-3">Shabadkosh Login</h2>
         {error && <Alert variant="danger">{error}</Alert>}
         <Form onSubmit={handleSubmit}>
           <Form.Group className="mb-3" controlId="formBasicEmail">

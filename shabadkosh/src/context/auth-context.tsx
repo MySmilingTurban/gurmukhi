@@ -14,7 +14,7 @@ export const AuthContext = createContext({
 
 export const AuthProvider = ({ children }: ChildrenProps) => {
   const [currentUser, setCurrentUser] = useState<LocalUser | null>(null)
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   useEffect(() => {
     const unsubscribe = userStateListener((user) => {
@@ -45,7 +45,6 @@ export const AuthProvider = ({ children }: ChildrenProps) => {
   const signOut = () => {
     SignOutUser()
     setCurrentUser(null)
-    navigate('/')
   }
 
   const value = {
