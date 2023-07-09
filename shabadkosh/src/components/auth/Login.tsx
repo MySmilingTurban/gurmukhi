@@ -1,34 +1,33 @@
-import React, { useState, Component } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Form, Alert, Card } from "react-bootstrap";
-import { Button } from "react-bootstrap";
-import GoogleButton from "react-google-button";
-import { useUserAuth } from "../UserAuthContext";
-import { GoogleAuthProvider, signInWithRedirect } from "firebase/auth";
-import { auth } from "../../firebase";
-import { checkUser } from "../util/users";
-import { setUser } from "../../store/actions/authActions";
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Form, Alert, Card } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
+import GoogleButton from 'react-google-button';
+import { useUserAuth } from '../UserAuthContext';
+import { GoogleAuthProvider, signInWithRedirect } from 'firebase/auth';
+import { auth } from '../../firebase';
+import { checkUser } from '../util/users';
 
 const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const { logIn, user } = useUserAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
-    setError("");
+    setError('');
     try {
       const valid = await checkUser(email, password);
-      if (!valid) throw new Error("Invalid user");
-      else console.log("Valid user");
-      const userDetails = localStorage.getItem("user");
+      if (!valid) throw new Error('Invalid user');
+      else console.log('Valid user');
+      const userDetails = localStorage.getItem('user');
       if (userDetails) {
         const user = JSON.parse(userDetails);
       }
       await logIn(email, password);
-      navigate("/home");
+      navigate('/home');
     } catch (err: any) {
       setError(err.message);
     }
@@ -41,7 +40,7 @@ const Login = () => {
     try {
       await signInWithRedirect(auth, provider);
 
-      navigate("/home");
+      navigate('/home');
     } catch (error: any) {
       console.log(error.message);
     }

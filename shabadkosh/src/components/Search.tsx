@@ -1,14 +1,14 @@
-import React, { useEffect, useState } from "react";
-import { Form, Button, Table } from "react-bootstrap";
-import { useUserAuth } from "./UserAuthContext";
-import { NewWordType } from "../types/word";
-import { onSnapshot, QuerySnapshot, DocumentData } from "firebase/firestore";
-import { wordsCollection } from "./util/controller";
-import { TimestampType } from "../types/timestamp";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from 'react';
+import { Form, Button, Table } from 'react-bootstrap';
+import { useUserAuth } from './UserAuthContext';
+import { NewWordType } from '../types/word';
+import { onSnapshot, QuerySnapshot, DocumentData } from 'firebase/firestore';
+import { wordsCollection } from './util/controller';
+import { TimestampType } from '../types/timestamp';
+import { useNavigate } from 'react-router-dom';
 
 const Search = () => {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState('');
   const [ isLoading, setIsLoading ] = useState<boolean>(true);
   const [words, setWords] = useState<NewWordType[]>([]);
   const [filteredWords, setFilteredWords] = useState<NewWordType[]>([]);
@@ -22,19 +22,19 @@ const Search = () => {
 
   useEffect(() => {
     if (words) {
-      if (query === "") {
+      if (query === '') {
         setFilteredWords(words);
-      } else if (query.match("[\u0A00-\u0A76,. ]+")) {
+      } else if (query.match('[\u0A00-\u0A76,. ]+')) {
         // console.log("Gurmukhi" , query);
         // console.log("words", words);
 
-        let filteredWords = words.filter((word) => word.word?.includes(query));
+        const filteredWords = words.filter((word: NewWordType) => word.word?.includes(query));
         // console.log("filteredWords", filteredWords);
         setFilteredWords(filteredWords);
-      } else if (query.match("[a-zA-Z]+")) {
+      } else if (query.match('[a-zA-Z ]+')) {
         // console.log("English", query);
         
-        let filteredWords = words.filter((word) => word.translation?.includes(query));
+        const filteredWords = words.filter((word: NewWordType) => word.translation?.includes(query));
         // console.log("filteredWords", filteredWords);
         setFilteredWords(filteredWords);
       } else {
@@ -66,8 +66,8 @@ const Search = () => {
   }, []);
 
   function convertTimestampToDate(timestamp: TimestampType) {
-    let timestampDate = new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
-    return timestampDate.toLocaleString('en-us', { year:"numeric", month:"short", day:"numeric", hour:"numeric", minute:"numeric", second:"numeric"});
+    const timestampDate = new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
+    return timestampDate.toLocaleString('en-us', { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric'});
   }
 
   if (isLoading) return <div>Loading...</div>;

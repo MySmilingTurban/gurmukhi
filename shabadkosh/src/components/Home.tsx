@@ -1,7 +1,7 @@
-import React from "react";
-import { Button, Card } from "react-bootstrap";
-import { useNavigate } from "react-router";
-import { useUserAuth } from "./UserAuthContext";
+import React from 'react';
+import { Button, Card } from 'react-bootstrap';
+import { useNavigate } from 'react-router';
+import { useUserAuth } from './UserAuthContext';
 
 const Home = (props: any) => {
   const { logOut, user } = useUserAuth();
@@ -13,7 +13,7 @@ const Home = (props: any) => {
   const handleLogout = async () => {
     try {
       await logOut();
-      navigate("/");
+      navigate('/');
     } catch (error: any) {
       console.log(error.message);
     }
@@ -24,7 +24,7 @@ const Home = (props: any) => {
       <Card>
         <Card.Body className="m-2 p-2">
           <div className="p-4 box mt-3 text-center">
-            Waheguru ji ka Khalsa, Waheguru ji ki Fateh {user?.displayName ?? ""} ji<br />
+            Waheguru ji ka Khalsa, Waheguru ji ki Fateh {user?.displayName ?? ''} ji<br />
             Use the navigation bar to navigate through this app!<br /><br />
             It&apos;s a nice day for Gurmukhi ! <br />
           </div>

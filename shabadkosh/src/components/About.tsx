@@ -1,5 +1,5 @@
-import React, { Component } from "react";
-import { Card } from "react-bootstrap";
+import React, { Component } from 'react';
+import { Card } from 'react-bootstrap';
 
 export class About extends Component {
   render() {

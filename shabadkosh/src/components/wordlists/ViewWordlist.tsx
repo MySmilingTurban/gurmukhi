@@ -42,7 +42,7 @@ function ViewWordlist() {
                 setWords(listOfWords ?? []);
                 setIsLoading(false);
             } else {
-                console.log("No such document!");
+                console.log('No such document!');
                 setFound(false);
                 setIsLoading(false);
             }
@@ -51,8 +51,8 @@ function ViewWordlist() {
       }, []);
 
     function convertTimestampToDate(timestamp: TimestampType) {
-        let timestampDate = new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
-        return timestampDate.toLocaleString('en-us', { year:"numeric", month:"short", day:"numeric", hour:"numeric", minute:"numeric", second:"numeric"});
+        const timestampDate = new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
+        return timestampDate.toLocaleString('en-us', { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric'});
     }
     
     const wordsData = words?.map((ele) => {
@@ -65,13 +65,13 @@ function ViewWordlist() {
         if (response) {
           const getWordlist = doc(firestore, `wordlists/${wordlist.id}`);
           deleteWordlist(getWordlist).then(() => {
-            alert("Word deleted!");
+            alert('Word deleted!');
             console.log(`Deleted word with id: ${wordlist.id}!`);
           }).catch((error) => {
             console.log(error);
           });
         } else {
-          console.log("Operation abort!");
+          console.log('Operation abort!');
         }
       }
 
@@ -89,7 +89,7 @@ function ViewWordlist() {
                 <h2>{wordlist.name}</h2>
                 <ButtonGroup style={{ display: 'flex' ,width: '150px', alignSelf: 'end'}}>
                     <Button href={editUrl}>Edit</Button>
-                    {user?.role === "admin" ? <Button onClick={() => delWordlist(wordlist)} variant="danger" >Delete</Button> : null}
+                    {user?.role === 'admin' ? <Button onClick={() => delWordlist(wordlist)} variant="danger" >Delete</Button> : null}
                 </ButtonGroup>
                 <span className="badge bg-primary" style={{width: '6rem'}}>{wordlist.status}</span>
                 <br /><br />

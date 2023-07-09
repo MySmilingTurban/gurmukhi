@@ -1,33 +1,33 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Form, Alert } from "react-bootstrap";
-import { Button } from "react-bootstrap";
-import { useUserAuth } from "../UserAuthContext";
-import { checkIfEmailUnique, checkIfUsernameUnique } from "../util/users";
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Form, Alert } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
+import { useUserAuth } from '../UserAuthContext';
+import { checkIfEmailUnique } from '../util/users';
 
 const Signup = () => {
-  const [email, setEmail] = useState("");
-  const [diplayName, setDisplayName] = useState("");
-  const [error, setError] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [diplayName, setDisplayName] = useState('');
+  const [error, setError] = useState('');
+  const [password, setPassword] = useState('');
   const { signUp } = useUserAuth();
-  let navigate = useNavigate();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e : any) => {
     e.preventDefault();
-    setError("");
+    setError('');
     try {
-      const role = "creator";
+      const role = 'creator';
       await checkIfEmailUnique(email).then(async (unique) => {
         if (unique) {
           await signUp(diplayName, role, email, password).then((val: any) => {
-            console.log("val: ", val);
+            console.log('val: ', val);
             if (val) {
-              navigate("/home");
+              navigate('/home');
             }
           });
         } else {
-          setError("Username already exists!");
+          setError('Username already exists!');
         }
       })
 
@@ -87,7 +87,7 @@ const Signup = () => {
         </Form>
       </div>
       <div className="p-4 box mt-3 text-center" style={{ backgroundColor: '#fff', width: '25%', justifyContent: 'center'}}>
-        Already have an account? <Link to="/">Log In</Link>
+        Already have an account? <Link to='/'>Log In</Link>
       </div>
     </div>
   );

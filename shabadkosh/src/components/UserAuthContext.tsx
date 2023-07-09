@@ -1,18 +1,16 @@
-import React from "react";
-import { createContext, useContext, useState, useEffect } from "react";
-import { auth, firestore } from "../firebase";
+import React from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
+import { auth, firestore } from '../firebase';
 import {
   signOut,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   onAuthStateChanged,
   sendEmailVerification,
-  updateCurrentUser,
-} from "firebase/auth";
-import { getUser } from "./util/users";
-import { addDoc, doc, setDoc } from "firebase/firestore";
-import { usersCollection } from "./util/controller";
-import { useNavigate } from "react-router-dom";
+} from 'firebase/auth';
+import { getUser } from './util/users';
+import { doc, setDoc } from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
 
 const userAuthContext  = createContext<any>(null);
 
@@ -36,28 +34,28 @@ export function UserAuthContextProvider({ children }: { children:JSX.Element }) 
           email,
           displayName: displayName ?? name,
         }).then((usr) => {
-          console.log("New User added to firestore");
-          console.log("User: ", usr);
+          console.log('New User added to firestore');
+          console.log('User: ', usr);
         });
         setUser(user);
         
         sendEmailVerification(auth.currentUser ?? user)
           .then((userCredential) => {
-            let userCredentialUser = {...user};
+            const userCredentialUser = {...user};
             // Alert Email verification sent!
-            alert("Email verification sent!");
+            alert('Email verification sent!');
           });
         return true;
       })
       .catch((error) => {
-        if (error.code == "auth/email-already-in-use") {
-          alert("The email address is already in use");
-        } else if (error.code == "auth/invalid-email") {
-          alert("The email address is not valid.");
-        } else if (error.code == "auth/operation-not-allowed") {
-          alert("Operation not allowed.");
-        } else if (error.code == "auth/weak-password") {
-          alert("The password is too weak.");
+        if (error.code == 'auth/email-already-in-use') {
+          alert('The email address is already in use');
+        } else if (error.code == 'auth/invalid-email') {
+          alert('The email address is not valid.');
+        } else if (error.code == 'auth/operation-not-allowed') {
+          alert('Operation not allowed.');
+        } else if (error.code == 'auth/weak-password') {
+          alert('The password is too weak.');
         }
         console.log(error);
         return false;
@@ -69,25 +67,25 @@ export function UserAuthContextProvider({ children }: { children:JSX.Element }) 
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentuser: any) => {
-      // console.log("Current user from UserAuthContext: ", currentuser);
+      // console.log('Current user from UserAuthContext: ', currentuser);
       if (currentuser === null) {
         navigate('/')
       } else {
         const { uid, email, displayName, photoURL } = currentuser;
-        const userData = getUser(email ?? "", uid)
+        const userData = getUser(email ?? '', uid)
           .then((data) => 
             {
-              // if (!data) console.log("Invalid user");
-              // else console.log("Valid user");
+              // if (!data) console.log('Invalid user');
+              // else console.log('Valid user');
               const usr = {
                 user,
                 uid,
                 email: data?.email,
                 displayName: data?.name,
-                photoURL: "",
+                photoURL: '',
                 role: data?.role,
               };
-              // console.log("usr: ", usr);
+              // console.log('usr: ', usr);
               setUser(usr);
           })
       }

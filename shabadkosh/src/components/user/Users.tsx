@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from "react";
-import { Card, Button, Container, Row, Badge, ListGroup, ButtonGroup } from "react-bootstrap";
-import { deleteWord, usersCollection, wordsCollection } from "../util/controller";
-import { DocumentData, QuerySnapshot, doc, onSnapshot } from "firebase/firestore";
-import { firestore } from "../../firebase";
-import { useUserAuth } from "../UserAuthContext";
-import { NewUserType } from "../../types/user";
+import React, { useEffect, useState } from 'react';
+import { Button, Container, ListGroup, ButtonGroup } from 'react-bootstrap';
+import { deleteWord, usersCollection } from '../util/controller';
+import { DocumentData, QuerySnapshot, doc, onSnapshot } from 'firebase/firestore';
+import { firestore } from '../../firebase';
+import { useUserAuth } from '../UserAuthContext';
+import { NewUserType } from '../../types/user';
 
 function Users() {
   const [ isLoading, setIsLoading ] = useState<boolean>(true);
@@ -13,10 +13,10 @@ function Users() {
 
   useEffect(() => {
     setIsLoading(true);
-    if (user?.role !== "admin") {
+    if (user?.role !== 'admin') {
         onSnapshot(usersCollection, (snapshot:
         QuerySnapshot<DocumentData>) => {
-        console.log("snapshot", snapshot);
+        console.log('snapshot', snapshot);
         setUsers(
             snapshot.docs.map((doc) => {
             return {
@@ -38,12 +38,12 @@ function Users() {
 
   // onError function which changes image source to nothing.jpeg
   const onError = (e: any) => {
-    e.target.style.display = "none";
+    e.target.style.display = 'none';
   };
 
 
   // console.log("Words", words);
-  let sortedUsers = users.sort(
+  const sortedUsers = users.sort(
     (p1, p2) => (p1.updated_at < p2.updated_at) ? 1 : (p1.updated_at > p2.updated_at) ? -1 : 0);
   // console.log("Sorted words: ", sortedWords);
 
@@ -52,11 +52,11 @@ function Users() {
     if (response) {
       const getWord = doc(firestore, `users/${user.id}`);
       deleteWord(getWord).then(() => {
-        alert("User deleted!");
+        alert('User deleted!');
         console.log(`Deleted user with id: ${user.id}!`);
       });
     } else {
-      console.log("Operation abort!");
+      console.log('Operation abort!');
     }
   }
 
@@ -73,8 +73,8 @@ function Users() {
           </div>
           <div className="d-flex flex-column align-items-end">
             <ButtonGroup>
-              <Button href={editUrl} style={{backgroundColor: "transparent", border: "transparent"}} hidden={user?.role != "admin"}>🖊️</Button>
-              <Button onClick={() => delUser(cuser)} style={{backgroundColor: "transparent", border: "transparent"}} hidden={user?.role != "admin"}>🗑️</Button>
+              <Button href={editUrl} style={{backgroundColor: 'transparent', border: 'transparent'}} hidden={user?.role != 'admin'}>🖊️</Button>
+              <Button onClick={() => delUser(cuser)} style={{backgroundColor: 'transparent', border: 'transparent'}} hidden={user?.role != 'admin'}>🗑️</Button>
             </ButtonGroup>
           </div>
         </ListGroup.Item>
@@ -82,7 +82,7 @@ function Users() {
   });
 
   if (users.length === 0 || isLoading) return <h2>Loading...</h2>;
-  if (user?.role != "admin") return <h2>Sorry, you are not authorized to view this page.</h2>;
+  if (user?.role != 'admin') return <h2>Sorry, you are not authorized to view this page.</h2>;
   return (
     <div className="container">
       <h2>Users</h2>

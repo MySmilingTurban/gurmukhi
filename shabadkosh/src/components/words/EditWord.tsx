@@ -1,16 +1,16 @@
-import React, { useEffect, useState } from "react";
-import { Card } from "react-bootstrap";
-import { useParams } from "react-router-dom";
-import { Button, Form, FormControlProps } from "react-bootstrap";
-import { Navigate, useNavigate } from "react-router-dom";
-import { Timestamp, doc, getDoc, getDocs, query, where } from "firebase/firestore";
-import { NewSentenceType } from "../../types/sentence";
-import { addQuestion, addSentence, addWord, deleteQuestion, deleteSentence, questionsCollection, sentencesCollection, updateQuestion, updateSentence, updateWord } from "../util/controller";
-import { auth, firestore } from "../../firebase";
-import { NewQuestionType } from "../../types/question";
-import { TimestampType } from "../../types/timestamp";
-import { NewWordType } from "../../types/word";
-import { useUserAuth } from "../UserAuthContext";
+import React, { useEffect, useState } from 'react';
+import { Card } from 'react-bootstrap';
+import { useParams } from 'react-router-dom';
+import { Button, Form, FormControlProps } from 'react-bootstrap';
+import { Navigate, useNavigate } from 'react-router-dom';
+import { Timestamp, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
+import { NewSentenceType } from '../../types/sentence';
+import { addQuestion, addSentence, addWord, deleteQuestion, deleteSentence, questionsCollection, sentencesCollection, updateQuestion, updateSentence, updateWord } from '../util/controller';
+import { auth, firestore } from '../../firebase';
+import { NewQuestionType } from '../../types/question';
+import { TimestampType } from '../../types/timestamp';
+import { NewWordType } from '../../types/word';
+import { useUserAuth } from '../UserAuthContext';
 
 const types = ['context', 'image', 'meaning', 'definition'];
 
@@ -22,7 +22,7 @@ const EditWord = () => {
   const [ found, setFound ] = useState<boolean>(true);
   const [ isLoading, setIsLoading ] = useState<boolean>(false);
   const [ word, setWord ] = useState<NewWordType>({
-    id: "",
+    id: '',
     created_at: {
       seconds: 0,
       nanoseconds: 0,
@@ -31,8 +31,8 @@ const EditWord = () => {
       seconds: 0,
       nanoseconds: 0,
     },
-    created_by: "",
-    updated_by: ""
+    created_by: '',
+    updated_by: ''
   });
   const [ sentences, setSentences ] = useState<NewSentenceType[]>([]);
   const [formValues, setFormValues] = useState({} as any);
@@ -42,21 +42,21 @@ const EditWord = () => {
   const {user} = useUserAuth();
 
   let status = {
-    "creating": "Creation in progress",
-    "created": "Created"
-  } as Object;
-  if (user.role == "admin") {
+    'creating': 'Creation in progress',
+    'created': 'Created'
+  } as object;
+  if (user.role == 'admin') {
     status = {
       ...status,
-      "reviewing": "Review in progress",
-      "reviewed": "Reviewed",
-      "active": "Active",
-      "inactive": "Inactive"
+      'reviewing': 'Review in progress',
+      'reviewed': 'Reviewed',
+      'active': 'Active',
+      'inactive': 'Inactive'
     }
-  } else if (user.role == "reviewer") {
+  } else if (user.role == 'reviewer') {
     status = {
-      "reviewing": "Review in progress",
-      "reviewed": "Reviewed"
+      'reviewing': 'Review in progress',
+      'reviewed': 'Reviewed'
     }
   }
 
@@ -77,7 +77,7 @@ const EditWord = () => {
         fillFormValues(newWordObj);
         setIsLoading(false);
       } else {
-        console.log("No such document!");
+        console.log('No such document!');
         setFound(false);
         setIsLoading(false);
       }
@@ -85,7 +85,7 @@ const EditWord = () => {
 
     const fetchSentence = async () => {
       setIsLoading(true);
-      const q = query(sentencesCollection, where("word_id", "==", wordid));
+      const q = query(sentencesCollection, where('word_id', '==', wordid));
       const querySnapshot = await getDocs(q);
       if (!querySnapshot.empty) {
         const newSentences = querySnapshot.docs.map((doc) => {
@@ -97,13 +97,13 @@ const EditWord = () => {
         setSentences(newSentences);
         setIsLoading(false);
       } else {
-        console.log("No sentences!");
+        console.log('No sentences!');
       }
     };
 
     const fetchQuestions = async () => {
       setIsLoading(true);
-      const q = query(questionsCollection, where("word_id", "==", wordid));
+      const q = query(questionsCollection, where('word_id', '==', wordid));
       const querySnapshot = await getDocs(q);
       if (!querySnapshot.empty) {
         const newQuestions = querySnapshot.docs.map((doc) => {
@@ -122,8 +122,8 @@ const EditWord = () => {
   }, []);
   
   function convertTimestampToDate(timestamp: TimestampType) {
-    let timestampDate = new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
-    return timestampDate.toLocaleString('en-us', { year:"numeric", month:"short", day:"numeric", hour:"numeric", minute:"numeric", second:"numeric"});
+    const timestampDate = new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
+    return timestampDate.toLocaleString('en-us', { year:'numeric', month:'short', day:'numeric', hour:'numeric', minute:'numeric', second:'numeric'});
   }
 
   const fillFormValues = (word: any) => {
@@ -140,35 +140,35 @@ const EditWord = () => {
     setSentences((prevSentences) => [
       ...prevSentences,
       {
-        word_id: "",
-        sentence: "",
-        translation: "",
+        word_id: '',
+        sentence: '',
+        translation: '',
       },
     ]);
   };
 
   const removeSentence = (idx: number, e: any) => {
     e.preventDefault();
-    console.log("Sentence ID: ", idx);
-    console.log("Sentences: ", sentences);
-    console.log("Sentence: ",sentences[idx]);
+    console.log('Sentence ID: ', idx);
+    console.log('Sentences: ', sentences);
+    console.log('Sentence: ',sentences[idx]);
 
     if (sentences[idx].word_id) {
       const response = confirm(`Are you sure you to delete this sentence: ${sentences[idx].sentence} for word: ${word.word}? \n This action is not reversible.`);
 
       if (response) {
-        console.log("Deleted!");
+        console.log('Deleted!');
         const getSentence = doc(firestore, `sentences/${sentences[idx].id}`);
         deleteSentence(getSentence).then(() => {
           console.log('Sentence deleted successfully!');
         })
       } else {
-        console.log("Operation abort!");
+        console.log('Operation abort!');
         return;
       }
     }
 
-    let newSFormValues = {} as any;
+    const newSFormValues = {} as any;
     
     // update sentences based on id of deleted sentence
     for (let i = 0; i < sentences.length; i++) {
@@ -201,13 +201,13 @@ const EditWord = () => {
       return newSentences;
     });
 
-    console.log("Sentences: ", sentences);
+    console.log('Sentences: ', sentences);
   };
 
   const removeAllSentences = (e:any) => {
     e.preventDefault();
     setSentences([]);
-    let newSFormValues = {} as any;
+    const newSFormValues = {} as any;
     for (const key in formValues) {
       if (!key.match(/sentence\d+/) && !key.match(/translation\d+/)) {
         newSFormValues[key] = formValues[key];
@@ -219,10 +219,10 @@ const EditWord = () => {
   const changeSentence = (event: any) => {
     event.preventDefault();
     const updatedSentences = sentences.map((sentence, sidx) => {
-      if (event.target.id.includes("translation")) {
+      if (event.target.id.includes('translation')) {
         if (parseInt(event.target.id.split('translation')[1]) !== sidx) return sentence;
         return { ...sentence, translation: event.target.value };
-      } else if (event.target.id.includes("sentence")) {
+      } else if (event.target.id.includes('sentence')) {
         if (parseInt(event.target.id.split('sentence')[1]) !== sidx) return sentence;
         return { ...sentence, sentence: event.target.value };
       } else {
@@ -237,37 +237,37 @@ const EditWord = () => {
     setQuestions((prevQuestions) => [
       ...prevQuestions,
       {
-        question: "",
-        type: "",
+        question: '',
+        type: '',
         options: [],
-        answer: "",
-        word_id: "",
+        answer: '',
+        word_id: '',
       },
     ]);
   };
 
   const removeQuestion = (idx: number, e: any) => {
     e.preventDefault();
-    console.log("Question ID: ", idx);
-    console.log("Questions: ", questions);
-    console.log("Question: ",questions[idx]);
+    console.log('Question ID: ', idx);
+    console.log('Questions: ', questions);
+    console.log('Question: ',questions[idx]);
 
     if (questions[idx].word_id) {
       const response = confirm(`Are you sure you to delete this question: ${questions[idx].question} for word: ${word.word}? \n This action is not reversible.`);
 
       if (response) {
-        console.log("Deleted!");
+        console.log('Deleted!');
         const getQuestion = doc(firestore, `questions/${questions[idx].id}`);
         deleteQuestion(getQuestion).then(() => {
           console.log('Question deleted successfully!');
         })
       } else {
-        console.log("Operation abort!");
+        console.log('Operation abort!');
         return;
       }
     }
 
-    let newSFormValues = {} as any;
+    const newSFormValues = {} as any;
     
     // update questions based on id of deleted question
     for (let i = 0; i < questions.length; i++) {
@@ -306,34 +306,22 @@ const EditWord = () => {
       return newQuestions;
     });
 
-    console.log("Questions: ", questions);
-  };
-
-  const removeAllQuestions = (e:any) => {
-    e.preventDefault();
-    setQuestions([]);
-    let newSFormValues = {} as any;
-    for (const key in formValues) {
-      if (!key.match(/question\d+/) && !key.match(/type\d+/) && !key.match(/options\d+/) && !key.match(/answer\d+/)) {
-        newSFormValues[key] = formValues[key];
-      }
-    }
-    setFormValues(newSFormValues);
+    console.log('Questions: ', questions);
   };
 
   const changeQuestion = (event: any) => {
     event.preventDefault();
     const updatedQuestions = questions.map((question, qidx) => {
-      if (event.target.id.includes("question")) {
+      if (event.target.id.includes('question')) {
         if (parseInt(event.target.id.split('question')[1]) !== qidx) return question;
         return { ...question, question: event.target.value };
-      } else if (event.target.id.includes("type")) {
+      } else if (event.target.id.includes('type')) {
         if (parseInt(event.target.id.split('type')[1]) !== qidx) return question;
         return { ...question, type: event.target.value };
-      } else if (event.target.id.includes("options")) {
+      } else if (event.target.id.includes('options')) {
         if (parseInt(event.target.id.split('options')[1]) !== qidx) return question;
         return { ...question, options: event.target.value };
-      } else if (event.target.id.includes("answer")) {
+      } else if (event.target.id.includes('answer')) {
         if (parseInt(event.target.id.split('answer')[1]) !== qidx) return question;
         return { ...question, answer: event.target.value };
       } else {
@@ -364,7 +352,7 @@ const EditWord = () => {
       return;
     }
 
-    console.log("Validated!");
+    console.log('Validated!');
 
     const formData = {} as any;
     Object.keys(formValues).map((ele) => {
@@ -373,7 +361,7 @@ const EditWord = () => {
       }
     });
 
-    console.log("Form data: ", formData);
+    console.log('Form data: ', formData);
 
     formData['sentences'] = sentences;
     formData['questions'] = questions;
@@ -388,7 +376,7 @@ const EditWord = () => {
       arr = arr.split(',');
     }
     arr = arr.map((ele: string) => {
-      if (ele != "") {
+      if (ele != '') {
         return ele.trim();
       }
     })
@@ -414,7 +402,7 @@ const EditWord = () => {
         created_at: Timestamp.now(),
         updated_at: Timestamp.now(),
         created_by: form.created_by,
-        updated_by: auth.currentUser?.email ?? "",
+        updated_by: auth.currentUser?.email ?? '',
         notes: form.notes ?? ''
     })
     .then(() => {
@@ -454,59 +442,59 @@ const EditWord = () => {
   if (isLoading) return <h2>Loading...</h2>
   if (!found) return <h2>Word not found!</h2>
   return (
-    <div className="d-flex justify-content-center align-items-center background">
-      <Form className="rounded p-4 p-sm-3" hidden={submitted} noValidate validated={validated} onSubmit={handleSubmit}>
-        <Form.Group className="mb-3" controlId="word" onChange={handleChange}>
+    <div className='d-flex justify-content-center align-items-center background'>
+      <Form className='rounded p-4 p-sm-3' hidden={submitted} noValidate validated={validated} onSubmit={handleSubmit}>
+        <Form.Group className='mb-3' controlId='word' onChange={handleChange}>
           <Form.Label>Word</Form.Label>
-          <Form.Control type="text" placeholder="ਸ਼ਬਦ" pattern=".+[\u0A00-\u0A76,. ]" defaultValue={word.word} required />
-          <Form.Control.Feedback type="invalid">
+          <Form.Control type='text' placeholder='ਸ਼ਬਦ' pattern='.+[\u0A00-\u0A76,. ]' defaultValue={word.word} required />
+          <Form.Control.Feedback type='invalid'>
             Please enter a word in Gurmukhi.
           </Form.Control.Feedback>
         </Form.Group>
 
-        <Form.Group className="mb-3" controlId="translation" onChange={handleChange}>
+        <Form.Group className='mb-3' controlId='translation' onChange={handleChange}>
           <Form.Label>Translation</Form.Label>
-          <Form.Control type="text" placeholder="Enter translation" pattern="[\u0A00-\u0A76।a-zA-Z0-9,. ]+" defaultValue={word.translation} required />
-          <Form.Control.Feedback type="invalid">
+          <Form.Control type='text' placeholder='Enter translation' pattern='[\u0A00-\u0A76।a-zA-Z0-9,. ]+' defaultValue={word.translation} required />
+          <Form.Control.Feedback type='invalid'>
             Please enter a translation in English.
           </Form.Control.Feedback>
         </Form.Group>
 
-        <Form.Group className="mb-3" controlId="meaning_punjabi" onChange={handleChange}>
+        <Form.Group className='mb-3' controlId='meaning_punjabi' onChange={handleChange}>
           <Form.Label>Meaning (Punjabi)</Form.Label>
-          <Form.Control type="text" placeholder="ਇੱਥੇ ਅਰਥ ਦਰਜ ਕਰੋ" pattern=".+[\u0A00-\u0A76।,. ]" defaultValue={word.meaning_punjabi} />
-          <Form.Control.Feedback type="invalid">
+          <Form.Control type='text' placeholder='ਇੱਥੇ ਅਰਥ ਦਰਜ ਕਰੋ' pattern='.+[\u0A00-\u0A76।,. ]' defaultValue={word.meaning_punjabi} />
+          <Form.Control.Feedback type='invalid'>
             Please enter meaning in Gurmukhi.
           </Form.Control.Feedback>
         </Form.Group>
 
-        <Form.Group className="mb-3" controlId="meaning_english" onChange={handleChange}>
+        <Form.Group className='mb-3' controlId='meaning_english' onChange={handleChange}>
           <Form.Label>Meaning (English)</Form.Label>
-          <Form.Control type="text" placeholder="Enter meaning" pattern="[\u0A00-\u0A76।a-zA-Z0-9,. ]+" defaultValue={word.meaning_english} />
-          <Form.Control.Feedback type="invalid">
+          <Form.Control type='text' placeholder='Enter meaning' pattern='[\u0A00-\u0A76।a-zA-Z0-9,. ]+' defaultValue={word.meaning_english} />
+          <Form.Control.Feedback type='invalid'>
             Please enter meaning in English.
           </Form.Control.Feedback>
         </Form.Group>
 
-        <Form.Group className="mb-3" controlId="synonyms" onChange={handleChange}>
+        <Form.Group className='mb-3' controlId='synonyms' onChange={handleChange}>
           <Form.Label>Synonyms</Form.Label>
-          <Form.Control type="text" placeholder="ਸਮਾਨਾਰਥੀ ਸ਼ਬਦ 1, ਸਮਾਨਾਰਥੀ ਸ਼ਬਦ 2, ..." pattern=".+[\u0A00-\u0A76।,. ]" defaultValue={word.synonyms} />
-          <Form.Control.Feedback type="invalid">
+          <Form.Control type='text' placeholder='ਸਮਾਨਾਰਥੀ ਸ਼ਬਦ 1, ਸਮਾਨਾਰਥੀ ਸ਼ਬਦ 2, ...' pattern='.+[\u0A00-\u0A76।,. ]' defaultValue={word.synonyms} />
+          <Form.Control.Feedback type='invalid'>
             Please enter comma-separated synonyms in Gurmukhi.
           </Form.Control.Feedback>
         </Form.Group>
 
-        <Form.Group className="mb-3" controlId="antonyms" onChange={handleChange}>
+        <Form.Group className='mb-3' controlId='antonyms' onChange={handleChange}>
           <Form.Label>Antonyms</Form.Label>
-          <Form.Control type="text" placeholder="ਵਿਰੋਧੀ ਸ਼ਬਦ 1, ਵਿਰੋਧੀ ਸ਼ਬਦ 2, ..." pattern=".+[\u0A00-\u0A76।,. ]" defaultValue={word.antonyms} />
-          <Form.Control.Feedback type="invalid">
+          <Form.Control type='text' placeholder='ਵਿਰੋਧੀ ਸ਼ਬਦ 1, ਵਿਰੋਧੀ ਸ਼ਬਦ 2, ...' pattern='.+[\u0A00-\u0A76।,. ]' defaultValue={word.antonyms} />
+          <Form.Control.Feedback type='invalid'>
             Please enter comma-separated antonyms in Gurmukhi.
           </Form.Control.Feedback>
         </Form.Group>
 
-        <Form.Group className="mb-3" controlId="status" onChange={handleChange}>
+        <Form.Group className='mb-3' controlId='status' onChange={handleChange}>
           <Form.Label>Status</Form.Label>
-          <Form.Select aria-label="Default select example" defaultValue={word.status}>
+          <Form.Select aria-label='Default select example' defaultValue={word.status}>
             {Object.entries(status).map((ele, idx) => {
               const [key, value] = ele;
               return (
@@ -516,32 +504,32 @@ const EditWord = () => {
           </Form.Select>
         </Form.Group>
 
-        <Form.Group className="mb-3" controlId="images" onChange={handleChange}>
+        <Form.Group className='mb-3' controlId='images' onChange={handleChange}>
           <Form.Label>Images</Form.Label>
-          <Form.Control type="text" placeholder="imgUrl1, imgUrl2, ..." defaultValue={word.images} />
+          <Form.Control type='text' placeholder='imgUrl1, imgUrl2, ...' defaultValue={word.images} />
         </Form.Group>
 
-        <Form.Group className="mb-3" onChange={handleChange}>
+        <Form.Group className='mb-3' onChange={handleChange}>
           <Form.Label style={{display: 'flex', flexDirection: 'row', width: '100%', height: 40, justifyContent: 'space-between'}}>
             <p>Sentences</p>
-            <div className="d-flex" style={{height: 40, alignItems: 'center'}}>
-              <button className="btn btn-sm" onClick={addNewSentence}>➕</button>
+            <div className='d-flex' style={{height: 40, alignItems: 'center'}}>
+              <button className='btn btn-sm' onClick={addNewSentence}>➕</button>
             </div>
           </Form.Label>
           {sentences && sentences.length ? sentences.map((sentence, idx) => {
             return (
-              <div key={idx} className="d-flex flex-column justify-content-between mb-3">
-                <div className="d-flex justify-content-between">
+              <div key={idx} className='d-flex flex-column justify-content-between mb-3'>
+                <div className='d-flex justify-content-between'>
                   <p>Sentence {idx+1}</p>
-                  <button className="btn btn-sm" onClick={(e) => removeSentence(idx, e)}>🗑️</button>
+                  <button className='btn btn-sm' onClick={(e) => removeSentence(idx, e)}>🗑️</button>
                 </div>
-                Sentence: <Form.Control id={`sentence${idx}`} className="m-1" type="text" value={sentence.sentence} placeholder="ਇੱਥੇ ਵਾਕ ਦਰਜ ਕਰੋ" onChange={(e) => changeSentence(e)} pattern=".+[\u0A00-\u0A76।,. ]" />
-                <Form.Control.Feedback type="invalid" itemID={`sentence${idx}`}>
+                Sentence: <Form.Control id={`sentence${idx}`} className='m-1' type='text' value={sentence.sentence} placeholder='ਇੱਥੇ ਵਾਕ ਦਰਜ ਕਰੋ' onChange={(e) => changeSentence(e)} pattern='.+[\u0A00-\u0A76।,. ]' />
+                <Form.Control.Feedback type='invalid' itemID={`sentence${idx}`}>
                   Please enter sentence in Gurmukhi.
                 </Form.Control.Feedback>
 
-                Translation: <Form.Control id={`translation${idx}`} className="m-1" type="text" value={sentence.translation} placeholder="Enter translation" onChange={(e) => changeSentence(e)} pattern="[\u0A00-\u0A76।a-zA-Z0-9,.' ]+" />
-                <Form.Control.Feedback type="invalid" itemID={`translation${idx}`}>
+                Translation: <Form.Control id={`translation${idx}`} className='m-1' type='text' value={sentence.translation} placeholder='Enter translation' onChange={(e) => changeSentence(e)} pattern="[\u0A00-\u0A76।a-zA-Z0-9,.' ]+" />
+                <Form.Control.Feedback type='invalid' itemID={`translation${idx}`}>
                   Please enter translation in English.
                 </Form.Control.Feedback>
               </div>
@@ -549,26 +537,26 @@ const EditWord = () => {
           }): null}
         </Form.Group>
 
-        <Form.Group className="mb-3" onChange={handleChange}>
+        <Form.Group className='mb-3' onChange={handleChange}>
           <Form.Label style={{display: 'flex', flexDirection: 'row', width: '100%', height: 40, justifyContent: 'space-between'}}>
             <p>Questions</p>
-            <div className="d-flex" style={{height: 40, alignItems: 'center'}}>
-              <button className="btn btn-sm" onClick={addNewQuestion}>➕</button>
+            <div className='d-flex' style={{height: 40, alignItems: 'center'}}>
+              <button className='btn btn-sm' onClick={addNewQuestion}>➕</button>
             </div>
           </Form.Label>
           {questions && questions.length ? questions.map((question, idx) => {
             return (
-              <div key={idx} className="d-flex flex-column justify-content-between mb-3">
-                <div className="d-flex justify-content-between">
+              <div key={idx} className='d-flex flex-column justify-content-between mb-3'>
+                <div className='d-flex justify-content-between'>
                   <p>Question {idx+1}</p>
-                  <button className="btn btn-sm" onClick={(e) => removeQuestion(idx, e)}>🗑️</button>
+                  <button className='btn btn-sm' onClick={(e) => removeQuestion(idx, e)}>🗑️</button>
                 </div>
-                Question: <Form.Control id={`question${idx}`} className="m-1" type="text" value={question.question} placeholder="ਇੱਥੇ ਸਵਾਲ ਦਰਜ ਕਰੋ" onChange={(e) => changeQuestion(e)} pattern=".+[\u0A00-\u0A76।,.].*[\s,?]*" />
-                <Form.Control.Feedback type="invalid" itemID={`question${idx}`}>
+                Question: <Form.Control id={`question${idx}`} className='m-1' type='text' value={question.question} placeholder='ਇੱਥੇ ਸਵਾਲ ਦਰਜ ਕਰੋ' onChange={(e) => changeQuestion(e)} pattern='.+[\u0A00-\u0A76।,.].*[\s,?]*' />
+                <Form.Control.Feedback type='invalid' itemID={`question${idx}`}>
                   Please enter question in Gurmukhi.
                 </Form.Control.Feedback>
 
-                Type: <Form.Select aria-label="Default select example" id={`type${idx}`} value={question.type} onChange={(e) => changeQuestion(e)}>
+                Type: <Form.Select aria-label='Default select example' id={`type${idx}`} value={question.type} onChange={(e) => changeQuestion(e)}>
                   {types.map((ele, idx) => {
                     return (
                       <option key={ele} value={ele}>{ele}</option>
@@ -576,13 +564,13 @@ const EditWord = () => {
                     })}
                 </Form.Select>
 
-                Options: <Form.Control id={`options${idx}`} className="m-1" type="text" placeholder="ਜਵਾਬ1, ਜਵਾਬ2, ..." value={question.options} onChange={(e) => changeQuestion(e)} pattern=".+[\u0A00-\u0A76।,.].[\s,?]*" />
-                <Form.Control.Feedback type="invalid" itemID={`options${idx}`}>
+                Options: <Form.Control id={`options${idx}`} className='m-1' type='text' placeholder='ਜਵਾਬ1, ਜਵਾਬ2, ...' value={question.options} onChange={(e) => changeQuestion(e)} pattern='.+[\u0A00-\u0A76।,.].[\s,?]*' />
+                <Form.Control.Feedback type='invalid' itemID={`options${idx}`}>
                   Please enter comma-separated options in Gurmukhi.
                 </Form.Control.Feedback>
 
-                Answer: <Form.Control id={`answer${idx}`} className="m-1" type="text" placeholder="ਜਵਾਬ" value={question.answer} onChange={(e) => changeQuestion(e)} pattern=".+[\u0A00-\u0A76।,.].[\s,?]*" />
-                <Form.Control.Feedback type="invalid" itemID={`answer${idx}`}>
+                Answer: <Form.Control id={`answer${idx}`} className='m-1' type='text' placeholder='ਜਵਾਬ' value={question.answer} onChange={(e) => changeQuestion(e)} pattern='.+[\u0A00-\u0A76।,.].[\s,?]*' />
+                <Form.Control.Feedback type='invalid' itemID={`answer${idx}`}>
                   Please enter answer in Gurmukhi.
                 </Form.Control.Feedback>
               </div>
@@ -590,19 +578,19 @@ const EditWord = () => {
           }): null}
         </Form.Group>
 
-        <Form.Group className="mb-3" controlId="notes" onChange={handleChange}>
+        <Form.Group className='mb-3' controlId='notes' onChange={handleChange}>
           <Form.Label>Notes</Form.Label>
-          <Form.Control as="textarea" rows={3} placeholder="Enter notes" defaultValue={word.notes} />
+          <Form.Control as='textarea' rows={3} placeholder='Enter notes' defaultValue={word.notes} />
         </Form.Group>
 
-          <Button variant="primary" type="submit">
+          <Button variant='primary' type='submit'>
             Submit
           </Button>
       </Form>
-      {submitted ? <Card className="d-flex justify-content-center align-items-center background mt-4">
-        <Card.Body className="rounded p-4 p-sm-3">
+      {submitted ? <Card className='d-flex justify-content-center align-items-center background mt-4'>
+        <Card.Body className='rounded p-4 p-sm-3'>
           <h3>Successfully updated the word!</h3>
-          <Button variant="primary" onClick={() => navigate('/words')}>Back to Words</Button>
+          <Button variant='primary' onClick={() => navigate('/words')}>Back to Words</Button>
         </Card.Body>
       </Card> : null}
     </div>

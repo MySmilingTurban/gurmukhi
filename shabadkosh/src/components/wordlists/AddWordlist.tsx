@@ -1,11 +1,11 @@
-import { DocumentData, QuerySnapshot, Timestamp, onSnapshot } from "firebase/firestore";
-import React, { useEffect, useState } from "react";
-import { Form, Button } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
-import { useUserAuth } from "../UserAuthContext";
-import { wordsCollection, addNewWordlist } from "../util/controller";
+import { DocumentData, QuerySnapshot, Timestamp, onSnapshot } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
+import { Form, Button } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
+import { useUserAuth } from '../UserAuthContext';
+import { wordsCollection, addNewWordlist } from '../util/controller';
 import {Multiselect} from 'multiselect-react-dropdown';
-import { MiniWord } from "../../types/word";
+import { MiniWord } from '../../types/word';
 
 const AddWordlist = () => {
     const [formValues, setFormValues] = useState({} as any);
@@ -20,7 +20,7 @@ const AddWordlist = () => {
         setIsLoading(true);
         onSnapshot(wordsCollection, (snapshot:
         QuerySnapshot<DocumentData>) => {
-        console.log("snapshot", snapshot);
+        console.log('snapshot', snapshot);
         setWords(
             snapshot.docs.map((doc) => {
             return {
@@ -43,12 +43,12 @@ const AddWordlist = () => {
     }
 
     const onSelect = (selectedList: [], selectedItem: any) => {
-      console.log("Selected list: ", selectedList, ", selected item: ", selectedItem);
+      // console.log("Selected list: ", selectedList, ", selected item: ", selectedItem);
       setSelectedWords(selectedList);
     }
 
     const onRemove = (selectedList: [], removedItem: any) => {
-      console.log("Selected list: ", selectedList, ", removed item: ", removedItem);
+      // console.log("Selected list: ", selectedList, ", removed item: ", removedItem);
       setSelectedWords(selectedList);
     }
 
@@ -56,7 +56,7 @@ const AddWordlist = () => {
         e.preventDefault();
         e.stopPropagation();
         
-        console.log("Form Values: ", formValues);
+        // console.log("Form Values: ", formValues);
 
         const form = e.currentTarget;
         if (form.checkValidity() === false) {
@@ -64,19 +64,19 @@ const AddWordlist = () => {
             return;
         }
 
-        console.log("Validated!");
-        let formData = {
+        // console.log("Validated!");
+        const formData = {
           ...formValues,
           words: selectedWords.map((ele) => ele.id)
         }
 
-        console.log("Form data: ", formData);
+        // console.log("Form data: ", formData);
         addWordlist(formData);
     }
 
     const splitAndClear = (some: any) => {
         if (!some) return [];
-        let splitList = some.replaceAll(" ", "").split(',');
+        const splitList = some.replaceAll(' ', '').split(',');
         // remove empty strings
         const arr = splitList.filter((str: string) => str != '');
         return arr;
@@ -87,21 +87,21 @@ const AddWordlist = () => {
         setIsLoading(true);
         addNewWordlist({
           name: formData.name,
-          status: formData.status ?? "active",
+          status: formData.status ?? 'active',
           metadata: {
-            curriculum: formData.curriculum ?? "",
-            level: formData.level ?? "",
-            subgroup: formData.subgroup ?? ""
+            curriculum: formData.curriculum ?? '',
+            level: formData.level ?? '',
+            subgroup: formData.subgroup ?? ''
           },
           words: formData.words ?? [],
           created_at: Timestamp.now(),
           created_by: user.username,
           updated_at: Timestamp.now(),
           updated_by: user.username,
-          notes: formData.notes ?? ""
+          notes: formData.notes ?? ''
         })
         .then((wordlist_id) => {
-          console.log("Wordlist created with ID: ", wordlist_id)
+          console.log('Wordlist created with ID: ', wordlist_id)
         }).finally(() => {
           setIsLoading(false);
         });
@@ -157,7 +157,7 @@ const AddWordlist = () => {
 
             <Form.Group className="mb-3" controlId="status" onChange={handleChange}>
               <Form.Label>Status</Form.Label>
-              <Form.Select aria-label="Default select example" defaultValue={"active"}>
+              <Form.Select aria-label="Default select example" defaultValue={'active'}>
                 {['active', 'inactive'].map((ele, idx) => {
                   return (
                     <option key={ele} value={ele}>{ele}</option>

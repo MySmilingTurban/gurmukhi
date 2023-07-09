@@ -1,8 +1,8 @@
-import React from "react";
-import { Nav } from "react-bootstrap";
+import React from 'react';
+import { Nav } from 'react-bootstrap';
 
-import { Navbar, NavDropdown, Container } from "react-bootstrap";
-import { useUserAuth } from "./UserAuthContext";
+import { Navbar, NavDropdown, Container } from 'react-bootstrap';
+import { useUserAuth } from './UserAuthContext';
 
 const NavBar = (props: any) => {
   const {user} = useUserAuth();
@@ -33,7 +33,7 @@ const NavBar = (props: any) => {
               <Nav.Link href="/search">Search</Nav.Link>
               <Nav.Link href="/about">About</Nav.Link>
               <Nav.Link href="/contact">Contact</Nav.Link>
-              <NavDropdown title={user?.role == 'admin' ? "Users" : "User"} id="basic-nav-dropdown-1">
+              <NavDropdown title={user?.role == 'admin' ? 'Users' : 'User'} id="basic-nav-dropdown-1">
                 <NavDropdown.Item href="/profile">Profile</NavDropdown.Item>
                 <NavDropdown.Item href="/users" hidden={user?.role != 'admin'}>View Users</NavDropdown.Item>
                 {/* <NavDropdown.Item href="/settings">Settings</NavDropdown.Item> */}

@@ -1,12 +1,12 @@
-import { DocumentData, QuerySnapshot, Timestamp, doc, getDoc, onSnapshot } from "firebase/firestore";
-import React, { useEffect, useState } from "react";
-import { Form, Button } from "react-bootstrap";
-import { useNavigate, useParams } from "react-router-dom";
-import { auth, firestore } from "../../firebase";
-import { useUserAuth } from "../UserAuthContext";
-import { wordsCollection, updateWordlist } from "../util/controller";
+import { DocumentData, QuerySnapshot, Timestamp, doc, getDoc, onSnapshot } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
+import { Form, Button } from 'react-bootstrap';
+import { useNavigate, useParams } from 'react-router-dom';
+import { auth, firestore } from '../../firebase';
+import { useUserAuth } from '../UserAuthContext';
+import { wordsCollection, updateWordlist } from '../util/controller';
 import { Multiselect } from 'multiselect-react-dropdown';
-import { MiniWord } from "../../types/word";
+import { MiniWord } from '../../types/word';
 
 const EditWordlist = () => {
     const { wlid } = useParams();
@@ -52,32 +52,32 @@ const EditWordlist = () => {
                 created_by: docSnap.data().created_by,
                 ...docSnap.data(),
             } as any;
-            console.log("Wordlist: ", newWordObj.words);
-            let wlist = newWordObj.words.map((ele: string) =>
+            console.log('Wordlist: ', newWordObj.words);
+            const wlist = newWordObj.words.map((ele: string) =>
               {
-                console.log("element form wlist: ", ele, words, localWordlist);
+                console.log('element form wlist: ', ele, words, localWordlist);
                 return localWordlist.filter((val: MiniWord) => val.id == ele)[0]
               } 
             );
             newWordObj['words'] = wlist;
-            console.log("Wlist: ", wlist);
+            console.log('Wlist: ', wlist);
             setWordlist(newWordObj);
             setSelectedWords(wlist);
             fillFormValues(newWordObj);
             setIsLoading(false);
           } else {
-              console.log("No such document!");
+              console.log('No such document!');
               setFound(false);
               setIsLoading(false);
           }
       };
       fetchWords();
-      console.log("Words: ", words);
+      console.log('Words: ', words);
       fetchWordlist();
     }, []);
 
     // useEffect(() => {
-    //   console.log("Words from state: ", words);
+    //   console.log('Words from state: ', words);
     // }, [words])
 
     const fillFormValues = (wordlist: any) => {
@@ -98,13 +98,13 @@ const EditWordlist = () => {
     }
 
     const onSelect = (selectedList: [], selectedItem: any) => {
-      console.log("Selected list: ", selectedList, ", selected item: ", selectedItem);
+      console.log('Selected list: ', selectedList, ', selected item: ', selectedItem);
       setSelectedWords(selectedList);
       setWordlist({...wordlist, words: selectedList});
     }
 
     const onRemove = (selectedList: [], removedItem: any) => {
-      console.log("Selected list: ", selectedList, ", removed item: ", removedItem);
+      console.log('Selected list: ', selectedList, ', removed item: ', removedItem);
       setSelectedWords(selectedList);
       setWordlist({...wordlist, words: selectedList});
     }
@@ -113,7 +113,7 @@ const EditWordlist = () => {
         e.preventDefault();
         e.stopPropagation();
         
-        console.log("Form Values: ", formValues);
+        console.log('Form Values: ', formValues);
 
         const form = e.currentTarget;
         if (form.checkValidity() === false) {
@@ -122,7 +122,7 @@ const EditWordlist = () => {
         }
 
         console.log('Validated!')
-        let formData = {
+        const formData = {
           id: formValues.id,
           name: formValues.name,
           status: formValues.status,
@@ -139,14 +139,14 @@ const EditWordlist = () => {
           notes: formValues.notes,
         }
 
-        // console.log("Form data: ", formData);
+        // console.log('Form data: ', formData);
 
         editWordlist(formData);
     }
 
     const splitAndClear = (some: any) => {
         if (!some) return [];
-        let splitList = some.replaceAll(" ", "").split(',');
+        const splitList = some.replaceAll(' ', '').split(',');
         // remove empty strings
         const arr = splitList.filter((str: string) => str != '');
         return arr;
@@ -175,43 +175,43 @@ const EditWordlist = () => {
 
     if (isLoading) return <div>Loading...</div>
     return (
-        <div className="d-flex justify-content-center align-items-center background">
-          <Form className="rounded p-4 p-sm-3" hidden={submitted} noValidate validated={validated} onSubmit={handleSubmit}>
-            <Form.Group className="mb-3" controlId="name" onChange={handleChange}>
+        <div className='d-flex justify-content-center align-items-center background'>
+          <Form className='rounded p-4 p-sm-3' hidden={submitted} noValidate validated={validated} onSubmit={handleSubmit}>
+            <Form.Group className='mb-3' controlId='name' onChange={handleChange}>
               <Form.Label>Name</Form.Label>
-              <Form.Control type="text" placeholder="Wordlist name" defaultValue={wordlist.name} required />
-              <Form.Control.Feedback type="invalid">
+              <Form.Control type='text' placeholder='Wordlist name' defaultValue={wordlist.name} required />
+              <Form.Control.Feedback type='invalid'>
                 Please enter a name for this wordlist.
               </Form.Control.Feedback>
             </Form.Group>
 
-            <Form.Group className="mb-3" controlId="curriculum" onChange={handleChange}>
+            <Form.Group className='mb-3' controlId='curriculum' onChange={handleChange}>
               <Form.Label>Curriculum</Form.Label>
-              <Form.Control type="text" placeholder="Curriculum" defaultValue={wordlist.metadata?.curriculum} />
-              <Form.Control.Feedback type="invalid">
+              <Form.Control type='text' placeholder='Curriculum' defaultValue={wordlist.metadata?.curriculum} />
+              <Form.Control.Feedback type='invalid'>
                 Please enter a name for the curriculum.
               </Form.Control.Feedback>
             </Form.Group>
 
-            <Form.Group className="mb-3" controlId="level" onChange={handleChange}>
+            <Form.Group className='mb-3' controlId='level' onChange={handleChange}>
               <Form.Label>Level</Form.Label>
-              <Form.Control type="text" placeholder="Level" defaultValue={wordlist.metadata?.level} />
-              <Form.Control.Feedback type="invalid">
+              <Form.Control type='text' placeholder='Level' defaultValue={wordlist.metadata?.level} />
+              <Form.Control.Feedback type='invalid'>
                 Please enter level.
               </Form.Control.Feedback>
             </Form.Group>
 
-            <Form.Group className="mb-3" controlId="subgroup" onChange={handleChange}>
+            <Form.Group className='mb-3' controlId='subgroup' onChange={handleChange}>
               <Form.Label>Subgroup</Form.Label>
-              <Form.Control type="text" placeholder="Subgroup" defaultValue={wordlist.metadata?.subgroup} />
-              <Form.Control.Feedback type="invalid">
+              <Form.Control type='text' placeholder='Subgroup' defaultValue={wordlist.metadata?.subgroup} />
+              <Form.Control.Feedback type='invalid'>
                 Please enter a subgroup to which this belongs to.
               </Form.Control.Feedback>
             </Form.Group>
 
-            <Form.Group className="mb-3" controlId="status" onChange={handleChange}>
+            <Form.Group className='mb-3' controlId='status' onChange={handleChange}>
               <Form.Label>Status</Form.Label>
-              <Form.Select aria-label="Default select example" defaultValue={wordlist.status}>
+              <Form.Select aria-label='Default select example' defaultValue={wordlist.status}>
                 {['active', 'inactive'].map((ele, idx) => {
                   return (
                     <option key={ele} value={ele}>{ele}</option>
@@ -220,11 +220,11 @@ const EditWordlist = () => {
               </Form.Select>
             </Form.Group>
 
-            <Form.Group className="mb-3" controlId="words" onChange={handleChange}>
+            <Form.Group className='mb-3' controlId='words' onChange={handleChange}>
               <Form.Label>Words</Form.Label>
               <Multiselect 
                 options={words}
-                displayValue="word"
+                displayValue='word'
                 showCheckbox={true}
                 onSelect={onSelect}
                 onRemove={onRemove}
@@ -232,20 +232,20 @@ const EditWordlist = () => {
               />
             </Form.Group>
 
-            <Form.Group className="mb-3" controlId="notes" onChange={handleChange}>
+            <Form.Group className='mb-3' controlId='notes' onChange={handleChange}>
               <Form.Label>Notes</Form.Label>
-              <Form.Control as="textarea" rows={3} defaultValue={wordlist.notes} placeholder="Enter notes" />
+              <Form.Control as='textarea' rows={3} defaultValue={wordlist.notes} placeholder='Enter notes' />
             </Form.Group>
     
-            <Button variant="primary" type="submit">
+            <Button variant='primary' type='submit'>
                 Submit
             </Button>
           </Form>
-          {submitted ? <div className="d-flex justify-content-center align-items-center background">
-            <div className="rounded p-4 p-sm-3">
+          {submitted ? <div className='d-flex justify-content-center align-items-center background'>
+            <div className='rounded p-4 p-sm-3'>
               <h3>Successfully updated wordlist!</h3>
-              {/* <Button variant="primary" onClick={unsetSubmitted}>Add another word</Button> */}
-              <Button variant="primary" onClick={() => navigate('/wordlists')}>Back to Wordlists</Button>
+              {/* <Button variant='primary' onClick={unsetSubmitted}>Add another word</Button> */}
+              <Button variant='primary' onClick={() => navigate('/wordlists')}>Back to Wordlists</Button>
             </div>
           </div> : null}
         </div>

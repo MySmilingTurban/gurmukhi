@@ -18,7 +18,7 @@ function Wordlists() {
         setIsLoading(true);
         onSnapshot(wordlistsCollection, (snapshot:
         QuerySnapshot<DocumentData>) => {
-        console.log("snapshot", snapshot);
+        console.log('snapshot', snapshot);
         setWordlists(
             snapshot.docs.map((doc) => {
             return {
@@ -33,7 +33,7 @@ function Wordlists() {
     }, []);
 
     const sortWordlists = (unwordlists: any[]) => {
-        let sortedWordlists = unwordlists.sort(
+        const sortedWordlists = unwordlists.sort(
           (p1, p2) => (p1.updated_at < p2.updated_at) ? 1 : (p1.updated_at > p2.updated_at) ? -1 : 0);
 
         return sortedWordlists;
@@ -44,13 +44,13 @@ function Wordlists() {
       if (response) {
         const getWordlist = doc(firestore, `wordlists/${wordlist.id}`);
         deleteWordlist(getWordlist).then(() => {
-          alert("Word deleted!");
+          alert('Word deleted!');
           console.log(`Deleted word with id: ${wordlist.id}!`);
         }).catch((error) => {
           console.log(error);
         });
       } else {
-        console.log("Operation abort!");
+        console.log('Operation abort!');
       }
     }
 
@@ -61,7 +61,7 @@ function Wordlists() {
             <ListGroup.Item
               key={wordlist.id}
               className="d-flex justify-content-between align-items-start"
-              style={{width: "80%"}}
+              style={{width: '80%'}}
               >
               <div className="ms-2 me-auto">
                 <h3 className="fw-bold">{wordlist.name}</h3>
@@ -73,9 +73,9 @@ function Wordlists() {
               </div>
               <div className="d-flex flex-column align-items-end">
                 <ButtonGroup>
-                  <Button href={viewUrl} style={{backgroundColor: "transparent", border: "transparent"}}>👁️</Button>
-                  <Button href={editUrl} style={{backgroundColor: "transparent", border: "transparent"}}>🖊️</Button>
-                  <Button onClick={() => delWordlist(wordlist)} style={{backgroundColor: "transparent", border: "transparent"}} hidden={user?.role != "admin"}>🗑️</Button>
+                  <Button href={viewUrl} style={{backgroundColor: 'transparent', border: 'transparent'}}>👁️</Button>
+                  <Button href={editUrl} style={{backgroundColor: 'transparent', border: 'transparent'}}>🖊️</Button>
+                  <Button onClick={() => delWordlist(wordlist)} style={{backgroundColor: 'transparent', border: 'transparent'}} hidden={user?.role != 'admin'}>🗑️</Button>
                 </ButtonGroup>
                 <Badge pill bg="primary" text="white" hidden={!wordlist.status}>
                   {wordlist.status}
