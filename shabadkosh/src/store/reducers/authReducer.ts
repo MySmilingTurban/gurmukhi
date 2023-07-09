@@ -1,13 +1,5 @@
-import { LocalUser } from "../../context/auth-context"
-
 const initState = {
     user: {}
-}
-
-export type UserState = {
-    auth: {
-      user: LocalUser
-    }
 }
 
 const authReducer = (state = initState, action: any) => {

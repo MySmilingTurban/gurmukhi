@@ -5,12 +5,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { auth, firestore } from "../../firebase";
 import { useUserAuth } from "../UserAuthContext";
 import { wordsCollection, updateWordlist } from "../util/controller";
-import {Multiselect} from 'multiselect-react-dropdown';
-
-interface Word {
-    id: string;
-    word: string;
-}
+import { Multiselect } from 'multiselect-react-dropdown';
+import { MiniWord } from "../../types/word";
 
 const EditWordlist = () => {
     const { wlid } = useParams();
@@ -23,12 +19,12 @@ const EditWordlist = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [wordlist, setWordlist] = useState<any>({});
     const [words, setWords] = useState<any>([]);
-    const [selectedWords, setSelectedWords] = useState<Word[]>([]);
+    const [selectedWords, setSelectedWords] = useState<MiniWord[]>([]);
     const {user} = useUserAuth();
 
 
     useEffect(() => {
-      let localWordlist = [] as Word[];
+      let localWordlist = [] as MiniWord[];
       const fetchWords = async () => {
         setIsLoading(true);
         onSnapshot(wordsCollection, (snapshot:
@@ -37,7 +33,7 @@ const EditWordlist = () => {
             return {
                 id: doc.id,
                 word: doc.data().word,
-            } as Word;
+            } as MiniWord;
           })
           localWordlist = allWords;
           setWords(allWords);
@@ -60,7 +56,7 @@ const EditWordlist = () => {
             let wlist = newWordObj.words.map((ele: string) =>
               {
                 console.log("element form wlist: ", ele, words, localWordlist);
-                return localWordlist.filter((val: Word) => val.id == ele)[0]
+                return localWordlist.filter((val: MiniWord) => val.id == ele)[0]
               } 
             );
             newWordObj['words'] = wlist;

@@ -14,20 +14,6 @@ import { useUserAuth } from "../UserAuthContext";
 
 const types = ['context', 'image', 'meaning', 'definition'];
 
-interface SentenceType {
-  sentence: string,
-  translation: string,
-  word_id: string
-}
-
-interface QuestionType {
-  question: string,
-  type: string,
-  options: string,
-  answer: string,
-  word_id: string
-}
-
 const EditWord = () => {
   const { wordid } = useParams();
   const getWord = doc(firestore, `words/${wordid}`);
@@ -400,7 +386,7 @@ const EditWord = () => {
     let arr = some;
     if (!Array.isArray(some)){
       arr = arr.split(',');
-    };
+    }
     arr = arr.map((ele: string) => {
       if (ele != "") {
         return ele.trim();

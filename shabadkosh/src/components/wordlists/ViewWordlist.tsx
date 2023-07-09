@@ -1,17 +1,12 @@
 import React, { useEffect, useState } from 'react'
-import { Card, Breadcrumb, Badge, ListGroup, ButtonGroup, Button } from 'react-bootstrap';
+import { Card, Breadcrumb, ButtonGroup, Button } from 'react-bootstrap';
 import { useParams } from 'react-router-dom';
-import { NewWordType } from '../../types/word';
-import { onSnapshot, QuerySnapshot, DocumentData, getDoc, doc } from 'firebase/firestore';
-import { deleteWordlist, getWordsByIdList, wordsCollection } from '../util/controller';
+import { MiniWord } from '../../types/word';
+import { getDoc, doc } from 'firebase/firestore';
+import { deleteWordlist, getWordsByIdList } from '../util/controller';
 import { firestore } from '../../firebase';
 import { TimestampType } from '../../types/timestamp';
 import { useUserAuth } from '../UserAuthContext';
-
-interface Word {
-    id: string;
-    word: string;
-}
 
 function ViewWordlist() {
     const {wlid} = useParams();
@@ -20,7 +15,7 @@ function ViewWordlist() {
 
     const [wordlist, setWordlist] = useState<any>({});
     const [found, setFound] = useState<boolean>(true);
-    const [words, setWords] = useState<Word[]>([]);
+    const [words, setWords] = useState<MiniWord[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
     useEffect(() => {
@@ -42,7 +37,7 @@ function ViewWordlist() {
                     return {
                         id: ele.id,
                         word: ele.data().word
-                    } as Word;
+                    } as MiniWord;
                 })
                 setWords(listOfWords ?? []);
                 setIsLoading(false);
@@ -61,7 +56,7 @@ function ViewWordlist() {
     }
     
     const wordsData = words?.map((ele) => {
-        return (<li style={{width: '150px'}}>{ele.word}</li>)
+        return (<li style={{width: '150px'}} key={ele.id}>{ele.word}</li>)
     });
     
     const editUrl = `/wordlists/edit/${wordlist.id}`;

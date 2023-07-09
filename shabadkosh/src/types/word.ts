@@ -17,3 +17,8 @@ export interface NewWordType {
     updated_by: string,
     notes?: string,
 }
+
+export interface MiniWord {
+    id: string;
+    word: string;
+}

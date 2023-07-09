@@ -241,7 +241,7 @@
 // }
 
 import React, { useState } from "react";
-import { Button, Card, Form, FormControlProps } from "react-bootstrap";
+import { Button, Card, Form } from "react-bootstrap";
 import { NewSentenceType } from "../../types/sentence";
 import { useNavigate } from "react-router-dom";
 import { addQuestion, addSentence, addWord } from "../util/controller";
@@ -251,20 +251,6 @@ import { NewQuestionType } from "../../types/question";
 import { useUserAuth } from "../UserAuthContext";
 
 const types = ['context', 'image', 'meaning', 'definition'];
-
-interface SentenceType {
-  sentence: string,
-  translation: string,
-  word_id: string
-}
-
-interface QuestionType {
-  question: string,
-  type: string,
-  options: string,
-  answer: string,
-  word_id: string
-}
 
 const AddWord = () => {
   const [formValues, setFormValues] = useState({} as any);
@@ -544,7 +530,7 @@ const AddWord = () => {
       // use return value of addWord to add sentences
       sentences.forEach((sentence: any) => {
         const lSentence = {...sentence, word_id};
-        const checkSentence = (sentence: SentenceType) => {
+        const checkSentence = (sentence: NewSentenceType) => {
           console.log(sentence);
         };
         checkSentence(lSentence);
@@ -555,11 +541,6 @@ const AddWord = () => {
       })
 
       questions.forEach((question: any) => {
-        const lQuestion = {...question, word_id};
-        const checkQuestion = (question: QuestionType) => {
-          console.log(question);
-        };
-        checkQuestion(lQuestion);
         addQuestion({
           ...question,
           options: splitAndClear(question.options) ?? [],

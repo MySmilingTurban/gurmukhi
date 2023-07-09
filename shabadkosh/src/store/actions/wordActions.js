@@ -1,7 +1,7 @@
-import { addWord, wordsCollection } from "../../components/util/controller";
+import { addWord } from "../../components/util/controller";
 
 export const createWord = (word) => {
-    return (dispatch, getState) => {
+    return (dispatch) => {
         // make async call to database
         addWord({
             ...word,

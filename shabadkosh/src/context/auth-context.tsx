@@ -1,23 +1,9 @@
 import React from "react";
-import { User } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { SignOutUser, userStateListener } from "../firebase";
-import { createContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useState, useEffect } from "react";
 import { getUser } from "../components/util/users";
-
-interface ChildrenProps {
-  children?: ReactNode
-}
-
-export interface LocalUser {
-  user: User | null,
-  uid?: string,
-  email?: string,
-  displayName?: string,
-  photoURL?: string
-  role?: string,
-  username?: string
-}
+import { ChildrenProps, LocalUser } from "../types/user";
 
 export const AuthContext = createContext({
   // "User" comes from firebase auth-public.d.ts

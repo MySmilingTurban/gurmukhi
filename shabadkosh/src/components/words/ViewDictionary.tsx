@@ -29,7 +29,7 @@ function ViewDictionary() {
       let filteredWords = words.filter((word) => word.word?.includes(query));
       console.log("filteredWords", filteredWords);
       setFilteredWords(sortWords(filteredWords));
-    } else if (query.match("[a-zA-Z \s]+")) {
+    } else if (query.match("[a-zA-Z ]+")) {
       // console.log("English", query);
       
       let filteredWords = words.filter((word) => word.translation?.toLowerCase().includes(query));
@@ -79,7 +79,7 @@ function ViewDictionary() {
     } else if (user?.role === "reviewer") {
       sortedWords = sortedWords.filter((word) => ["reviewing", "created"].includes(word.status ?? ""));
     } else if (user?.role === "admin") {
-      sortedWords = sortedWords;
+      // no change, admin can view all
     } else {
       sortedWords = sortedWords.filter((word) => ["..."].includes(word.status ?? ""));
     }

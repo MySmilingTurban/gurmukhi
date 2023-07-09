@@ -2,23 +2,18 @@ import { DocumentData, QuerySnapshot, Timestamp, onSnapshot } from "firebase/fir
 import React, { useEffect, useState } from "react";
 import { Form, Button } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import { auth } from "../../firebase";
 import { useUserAuth } from "../UserAuthContext";
-import { addWord, addSentence, addQuestion, wordsCollection, addNewWordlist } from "../util/controller";
+import { wordsCollection, addNewWordlist } from "../util/controller";
 import {Multiselect} from 'multiselect-react-dropdown';
-
-interface Word {
-    id: string;
-    word: string;
-}
+import { MiniWord } from "../../types/word";
 
 const AddWordlist = () => {
     const [formValues, setFormValues] = useState({} as any);
     const [validated, setValidated] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [words, setWords] = useState<Word[]>([]);
-    const [selectedWords, setSelectedWords] = useState<Word[]>([]);
+    const [words, setWords] = useState<MiniWord[]>([]);
+    const [selectedWords, setSelectedWords] = useState<MiniWord[]>([]);
     const {user} = useUserAuth();
 
     useEffect(() => {
@@ -78,24 +73,6 @@ const AddWordlist = () => {
         console.log("Form data: ", formData);
         addWordlist(formData);
     }
-
-    /*
-    Collection: WordLists
-        {
-        "wordlist_id": <wordlist_id>,
-        "name": <name>,
-        "words": [<word_id_1>, <word_id_2>, ...],
-        "metadata": {
-            "level": <level>,
-            "curriculum": <curriculum>,
-                "subgroup": <subgroup>
-        },
-        "status": <status>,
-        "created_by": <user_id>,
-        "created_at": <timestamp>,
-        "updated_at": <timestamp>
-        }
-     */
 
     const splitAndClear = (some: any) => {
         if (!some) return [];

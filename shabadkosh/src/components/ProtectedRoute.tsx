@@ -1,9 +1,9 @@
 import React from "react";
 import { Navigate } from "react-router-dom";
-import { useUserAuth } from "./UserAuthContext";
 import { useSelector } from "react-redux";
-import { UserState } from "../store/reducers/authReducer";
+import { useUserAuth } from "./UserAuthContext";
 import { auth } from "../firebase";
+import { UserState } from "../types/user";
 
 const ProtectedRoute = ({ children }: { children:JSX.Element }) => {
   const state = useSelector((state: UserState) => state.auth.user)

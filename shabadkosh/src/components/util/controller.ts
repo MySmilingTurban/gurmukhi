@@ -43,10 +43,6 @@ export const reviewWord = async (word: DocumentReference, wordData: NewWordType)
 }
 
 // get word from a list of word ids
-interface Word {
-    id: string;
-    word: string;
-}
 export const getWordsByIdList = async (idList: string[]) => {
     if (idList.length > 0) {
         const q = query(wordsCollection, where(documentId(), "in", idList));
