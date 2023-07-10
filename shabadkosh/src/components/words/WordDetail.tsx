@@ -145,8 +145,7 @@ function WordDetail() {
       <ButtonGroup style={{ display: 'flex' ,width: '150px', alignSelf: 'end'}}>
         <Button href={editUrl}>Edit</Button>
         {user?.role == 'admin' ?<Button onClick={() => delWord(word)} variant='danger' hidden={user?.role != 'admin'}>Delete</Button> : null}
-        {user?.role == 'reviewer' ? <Button onClick={() => revWord(word)} variant='success' hidden={word.status != 'created'}>Approve</Button> : null}
-        
+        {(user?.role == 'reviewer' && ['created', 'reviewing', 'reviewed'].includes(word.status ?? 'creating')) ? <Button onClick={() => revWord(word)} variant='success'>Approve</Button> : null}
       </ButtonGroup>
 
       {/* check if word != {} */}

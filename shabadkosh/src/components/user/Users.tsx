@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Container, ListGroup, ButtonGroup } from 'react-bootstrap';
-import { deleteWord, usersCollection } from '../util/controller';
+import { deleteWord } from '../util/controller';
 import { DocumentData, QuerySnapshot, doc, onSnapshot } from 'firebase/firestore';
 import { firestore } from '../../firebase';
 import { useUserAuth } from '../UserAuthContext';
 import { NewUserType } from '../../types/user';
+import { usersCollection } from '../util/users';
 
 function Users() {
   const [ isLoading, setIsLoading ] = useState<boolean>(true);
@@ -61,7 +62,7 @@ function Users() {
   }
 
   const usersData = sortedUsers?.map((cuser) => {
-    const editUrl = `/editUser/${cuser.id}`;
+    const editUrl = `/users/edit/${cuser.id}`;
     return (
         <ListGroup.Item
           key={cuser.id}

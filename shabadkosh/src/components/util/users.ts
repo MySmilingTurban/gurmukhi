@@ -1,4 +1,4 @@
-import { collection, doc, getDoc, getDocs, limit, query, where } from 'firebase/firestore'
+import { DocumentReference, collection, doc, getDoc, getDocs, limit, query, setDoc, where } from 'firebase/firestore'
 import db from './controller'
 
 export const usersCollection = collection(db, 'users');
@@ -23,6 +23,11 @@ export const checkIfEmailUnique = async (email: string) => {
     const q = query(usersCollection, where('email', '==', email));
     const usersSnapshot = await getDocs(q);
     return usersSnapshot.empty;
+}
+
+export const updateUser = async (userRef: DocumentReference, userData: any) => {
+    const updatedUser = await setDoc(userRef, { ...userData });
+    return updatedUser;
 }
 
 export const getUser = async (email: string, uid: string) => {

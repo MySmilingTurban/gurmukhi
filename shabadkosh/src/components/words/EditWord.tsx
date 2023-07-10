@@ -399,7 +399,7 @@ const EditWord = () => {
         antonyms: splitAndClear(form.antonyms) ?? [],
         images: splitAndClear(form.images) ?? [],
         status: form.status,
-        created_at: Timestamp.now(),
+        created_at: word.created_at,
         updated_at: Timestamp.now(),
         created_by: form.created_by,
         updated_by: auth.currentUser?.email ?? '',
@@ -494,7 +494,7 @@ const EditWord = () => {
 
         <Form.Group className='mb-3' controlId='status' onChange={handleChange}>
           <Form.Label>Status</Form.Label>
-          <Form.Select aria-label='Default select example' defaultValue={word.status}>
+          <Form.Select aria-label='Default select example' defaultValue={Object.keys(status).includes(word.status ?? '') ? word.status : (user.role === 'reviewer' ? 'reviewing' : 'creating')}>
             {Object.entries(status).map((ele, idx) => {
               const [key, value] = ele;
               return (

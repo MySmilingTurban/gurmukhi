@@ -5,7 +5,7 @@ import { useUserAuth } from './UserAuthContext';
 const ProtectedRoute = ({ children }: { children:JSX.Element }) => {
   const { user } = useUserAuth();
 
-  if (!user) {
+  if (user === null) {
     console.log('User is not logged in');
     return <Navigate to='/' />;
   }

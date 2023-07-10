@@ -21,6 +21,7 @@ import AddWordlist from './components/wordlists/AddWordlist';
 import Wordlists from './components/wordlists/Wordlists';
 import EditWordlist from './components/wordlists/EditWordlist';
 import ViewWordlist from './components/wordlists/ViewWordlist';
+import EditUser from './components/user/EditUser';
 
 function App() {
   return (
@@ -73,6 +74,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Users />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/users/edit/:uid"
+            element={
+              <ProtectedRoute>
+                <EditUser />
               </ProtectedRoute>
             }
           />

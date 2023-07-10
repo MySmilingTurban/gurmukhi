@@ -33,6 +33,7 @@ const AddWord = () => {
     }
   } else if (user.role == 'reviewer') {
     status = {
+      ...status,
       'reviewing': 'Review in progress',
       'reviewed': 'Reviewed'
     }

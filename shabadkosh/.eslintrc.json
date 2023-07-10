@@ -30,6 +30,9 @@
             "jsx": true
           },
           "sourceType": "module"
+        },
+        "rules":{
+          "@typescript-eslint/no-empty-function": "off"
         }
       }
     ]

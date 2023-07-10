@@ -9,14 +9,12 @@ import {
   sendEmailVerification,
 } from 'firebase/auth';
 import { getUser } from './util/users';
-import { doc, setDoc } from 'firebase/firestore';
-import { useNavigate } from 'react-router-dom';
+import { Timestamp, doc, setDoc } from 'firebase/firestore';
 
 const userAuthContext  = createContext<any>(null);
 
 export function UserAuthContextProvider({ children }: { children:JSX.Element }) {
   const [user, setUser] = useState({});
-  const navigate = useNavigate();
   function logIn(email: string, password: string) {
     return signInWithEmailAndPassword(auth, email, password);
   }
@@ -33,6 +31,9 @@ export function UserAuthContextProvider({ children }: { children:JSX.Element }) 
           role,
           email,
           displayName: displayName ?? name,
+          created_at: Timestamp.now(),
+          created_by: 'self',
+          updated_at: Timestamp.now()
         }).then((usr) => {
           console.log('New User added to firestore');
           console.log('User: ', usr);
@@ -69,7 +70,7 @@ export function UserAuthContextProvider({ children }: { children:JSX.Element }) 
     const unsubscribe = onAuthStateChanged(auth, (currentuser: any) => {
       // console.log('Current user from UserAuthContext: ', currentuser);
       if (currentuser === null) {
-        navigate('/')
+        // navigate('/')
       } else {
         const { uid, email, displayName, photoURL } = currentuser;
         const userData = getUser(email ?? '', uid)

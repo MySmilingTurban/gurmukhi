@@ -132,5 +132,3 @@ export const deleteWordlist = async (wordlist: DocumentReference) => {
     const delWordlist = await deleteDoc(wordlist);
     return delWordlist;
 }
-
-export const usersCollection = collection(db, 'users');
