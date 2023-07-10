@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Form, Button, Table } from 'react-bootstrap';
-import { useUserAuth } from './UserAuthContext';
+import { Form, Table } from 'react-bootstrap';
 import { NewWordType } from '../types/word';
 import { onSnapshot, QuerySnapshot, DocumentData } from 'firebase/firestore';
 import { wordsCollection } from './util/controller';
@@ -12,9 +11,9 @@ const Search = () => {
   const [ isLoading, setIsLoading ] = useState<boolean>(true);
   const [words, setWords] = useState<NewWordType[]>([]);
   const [filteredWords, setFilteredWords] = useState<NewWordType[]>([]);
-  const { user } = useUserAuth();
   const navigate = useNavigate();
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleSearch = async (event: any) => {
     event.preventDefault();
     // console.log("query", query);
@@ -41,7 +40,7 @@ const Search = () => {
         console.log(query);
       }
     }
-  }, [query]);
+  }, [query, words]);
 
   useEffect(() => {
     setIsLoading(true);

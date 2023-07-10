@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { DocumentData, QuerySnapshot, Timestamp, onSnapshot } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { Form, Button } from 'react-bootstrap';
@@ -72,14 +73,6 @@ const AddWordlist = () => {
 
         // console.log("Form data: ", formData);
         addWordlist(formData);
-    }
-
-    const splitAndClear = (some: any) => {
-        if (!some) return [];
-        const splitList = some.replaceAll(' ', '').split(',');
-        // remove empty strings
-        const arr = splitList.filter((str: string) => str != '');
-        return arr;
     }
 
     // connect the below function and call in handleSubmit
@@ -158,7 +151,7 @@ const AddWordlist = () => {
             <Form.Group className="mb-3" controlId="status" onChange={handleChange}>
               <Form.Label>Status</Form.Label>
               <Form.Select aria-label="Default select example" defaultValue={'active'}>
-                {['active', 'inactive'].map((ele, idx) => {
+                {['active', 'inactive'].map((ele) => {
                   return (
                     <option key={ele} value={ele}>{ele}</option>
                   );

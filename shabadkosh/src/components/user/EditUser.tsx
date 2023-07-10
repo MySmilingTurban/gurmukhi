@@ -1,5 +1,6 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Form, Alert, Card } from 'react-bootstrap';
 import { Button } from 'react-bootstrap';
 import { useUserAuth } from '../UserAuthContext';
@@ -19,7 +20,7 @@ const EditUser = () => {
   const [validated, setValidated] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
-  const { signUp, user } = useUserAuth();
+  const { user } = useUserAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -132,7 +133,7 @@ const EditUser = () => {
           <Form.Group className="mb-3" controlId="role" onChange={handleChange}>
             <Form.Label>Role</Form.Label>
             <Form.Select aria-label="Default select example" defaultValue={localUser.role}>
-              {Object.entries(roles).map((ele, idx) => {
+              {Object.entries(roles).map((ele) => {
                 const [key, value] = ele;
                 return (
                   <option key={key} value={key}>{value}</option>

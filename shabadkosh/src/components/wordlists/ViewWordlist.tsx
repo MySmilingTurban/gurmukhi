@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from 'react'
 import { Card, Breadcrumb, ButtonGroup, Button } from 'react-bootstrap';
 import { useParams } from 'react-router-dom';

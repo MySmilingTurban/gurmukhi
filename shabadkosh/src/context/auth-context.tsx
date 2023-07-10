@@ -1,6 +1,5 @@
-/*eslint @typescript-eslint/no-empty-function: ["error", { "allow": ["arrowFunctions"] }]*/
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { SignOutUser, userStateListener } from '../firebase';
 import { createContext, useState, useEffect } from 'react';
 import { getUser } from '../components/util/users';
@@ -15,12 +14,11 @@ export const AuthContext = createContext({
 
 export const AuthProvider = ({ children }: ChildrenProps) => {
   const [currentUser, setCurrentUser] = useState<LocalUser | null>(null)
-  const navigate = useNavigate();
 
   useEffect(() => {
     const unsubscribe = userStateListener((user) => {
       if (user) {
-        const { uid, email, displayName, photoURL } = user
+        const { uid, email } = user
         const userData = getUser(email ?? '', uid)
         .then((data) => 
           {

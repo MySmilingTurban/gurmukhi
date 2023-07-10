@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom';
 import { useUserAuth } from '../UserAuthContext';

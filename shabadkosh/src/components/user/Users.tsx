@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from 'react';
 import { Button, Container, ListGroup, ButtonGroup } from 'react-bootstrap';
 import { deleteWord } from '../util/controller';
@@ -36,12 +37,6 @@ function Users() {
       setIsLoading(false);
     }
   }, []);
-
-  // onError function which changes image source to nothing.jpeg
-  const onError = (e: any) => {
-    e.target.style.display = 'none';
-  };
-
 
   // console.log("Words", words);
   const sortedUsers = users.sort(

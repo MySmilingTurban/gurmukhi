@@ -3,7 +3,7 @@ import { onSnapshot, QuerySnapshot, DocumentData, doc } from 'firebase/firestore
 import React, { useEffect, useState } from 'react'
 import { useUserAuth } from '../UserAuthContext';
 import { deleteWordlist, wordlistsCollection } from '../util/controller';
-import { Badge, Button, ButtonGroup, Card, ListGroup } from 'react-bootstrap';
+import { Badge, Button, ButtonGroup, ListGroup } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { firestore } from '../../firebase';
 

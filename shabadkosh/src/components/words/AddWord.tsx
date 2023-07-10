@@ -379,7 +379,7 @@ const AddWord = () => {
         <Form.Group className='mb-3' controlId='status' onChange={handleChange}>
           <Form.Label>Status</Form.Label>
           <Form.Select aria-label='Default select example'>
-            {Object.entries(status).map((ele, idx) => {
+            {Object.entries(status).map((ele) => {
               const [key, value] = ele;
               return (
                 <option key={key+value.toString()} value={key}>{value}</option>
@@ -443,7 +443,7 @@ const AddWord = () => {
                 </Form.Control.Feedback>
 
                 Type: <Form.Select aria-label='Default select example' id={`type${idx}`} value={question.type} onChange={(e) => changeQuestion(e)}>
-                  {types.map((ele, idx) => {
+                  {types.map((ele) => {
                     return (
                       <option key={ele} value={ele}>{ele}</option>
                       );

@@ -1,14 +1,11 @@
+/* eslint-disable  @typescript-eslint/no-explicit-any */
 import React from 'react';
 import { Button, Card } from 'react-bootstrap';
 import { useNavigate } from 'react-router';
 import { useUserAuth } from './UserAuthContext';
 
-const Home = (props: any) => {
+const Home = () => {
   const { logOut, user } = useUserAuth();
-  // if (user) {
-  //   console.log("User: ", user);
-  //   console.log("Authy: ", auth.currentUser?.uid);
-  // }
   const navigate = useNavigate();
   const handleLogout = async () => {
     try {

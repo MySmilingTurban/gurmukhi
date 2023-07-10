@@ -1,9 +1,9 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { DocumentData, QuerySnapshot, Timestamp, doc, getDoc, onSnapshot } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { Form, Button } from 'react-bootstrap';
 import { useNavigate, useParams } from 'react-router-dom';
 import { auth, firestore } from '../../firebase';
-import { useUserAuth } from '../UserAuthContext';
 import { wordsCollection, updateWordlist } from '../util/controller';
 import { Multiselect } from 'multiselect-react-dropdown';
 import { MiniWord } from '../../types/word';
@@ -20,8 +20,6 @@ const EditWordlist = () => {
     const [wordlist, setWordlist] = useState<any>({});
     const [words, setWords] = useState<any>([]);
     const [selectedWords, setSelectedWords] = useState<MiniWord[]>([]);
-    const {user} = useUserAuth();
-
 
     useEffect(() => {
       let localWordlist = [] as MiniWord[];
@@ -144,14 +142,6 @@ const EditWordlist = () => {
         editWordlist(formData);
     }
 
-    const splitAndClear = (some: any) => {
-        if (!some) return [];
-        const splitList = some.replaceAll(' ', '').split(',');
-        // remove empty strings
-        const arr = splitList.filter((str: string) => str != '');
-        return arr;
-    }
-
     // connect the below function and call in handleSubmit
     const editWordlist = (formData: any) => {
         setIsLoading(true);
@@ -165,15 +155,10 @@ const EditWordlist = () => {
         setSubmitted(true);
     }
 
-    const unsetSubmitted = () => {
-        setSubmitted(false);
-        // refresh page
-        window.location.reload();
-    }
-
     const navigate = useNavigate();
-
+    
     if (isLoading) return <div>Loading...</div>
+    if (!found) return <h2>Wordlist not found!</h2>;
     return (
         <div className='d-flex justify-content-center align-items-center background'>
           <Form className='rounded p-4 p-sm-3' hidden={submitted} noValidate validated={validated} onSubmit={handleSubmit}>
@@ -212,7 +197,7 @@ const EditWordlist = () => {
             <Form.Group className='mb-3' controlId='status' onChange={handleChange}>
               <Form.Label>Status</Form.Label>
               <Form.Select aria-label='Default select example' defaultValue={wordlist.status}>
-                {['active', 'inactive'].map((ele, idx) => {
+                {['active', 'inactive'].map((ele) => {
                   return (
                     <option key={ele} value={ele}>{ele}</option>
                   );

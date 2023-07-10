@@ -1,4 +1,4 @@
-import { DocumentReference, collection, doc, getDoc, getDocs, limit, query, setDoc, where } from 'firebase/firestore'
+import { DocumentReference, collection, doc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore'
 import db from './controller'
 
 export const usersCollection = collection(db, 'users');

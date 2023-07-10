@@ -4,7 +4,7 @@ import { Nav } from 'react-bootstrap';
 import { Navbar, NavDropdown, Container } from 'react-bootstrap';
 import { useUserAuth } from './UserAuthContext';
 
-const NavBar = (props: any) => {
+const NavBar = () => {
   const {user} = useUserAuth();
 
   return (

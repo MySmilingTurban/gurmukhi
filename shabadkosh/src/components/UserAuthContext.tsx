@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React from 'react';
 import { createContext, useContext, useState, useEffect } from 'react';
 import { auth, firestore } from '../firebase';
@@ -24,8 +26,9 @@ export function UserAuthContextProvider({ children }: { children:JSX.Element }) 
       .then(async (userCredential) => {
         // Signed in
         const user = userCredential.user;
-        const { uid, email, displayName, photoURL } = user;
+        const { uid, email, displayName } = user;
         const getUser = doc(firestore, `users/${uid}`);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const setNewUser = setDoc(getUser, {
           name,
           role,
@@ -41,8 +44,8 @@ export function UserAuthContextProvider({ children }: { children:JSX.Element }) 
         setUser(user);
         
         sendEmailVerification(auth.currentUser ?? user)
-          .then((userCredential) => {
-            const userCredentialUser = {...user};
+          .then(() => {
+            // const userCredentialUser = {...user};
             // Alert Email verification sent!
             alert('Email verification sent!');
           });
@@ -72,7 +75,8 @@ export function UserAuthContextProvider({ children }: { children:JSX.Element }) 
       if (currentuser === null) {
         // navigate('/')
       } else {
-        const { uid, email, displayName, photoURL } = currentuser;
+        const { uid, email } = currentuser;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const userData = getUser(email ?? '', uid)
           .then((data) => 
             {

@@ -1,4 +1,4 @@
-import React, { Component, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card } from 'react-bootstrap';
 import { useUserAuth } from '../UserAuthContext';
 import { auth } from '../../firebase';

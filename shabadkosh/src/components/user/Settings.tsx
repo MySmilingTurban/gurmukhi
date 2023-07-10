@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Card, CardProps } from 'react-bootstrap';
+import { Card } from 'react-bootstrap';
 
 export class Settings extends Component {
   render() {

@@ -1,7 +1,8 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from 'react';
 import { Card, Button, Container, Row, Badge, ListGroup, ButtonGroup, Form } from 'react-bootstrap';
 import { deleteWord, wordsCollection } from '../util/controller';
-import { DocumentData, QuerySnapshot, doc, onSnapshot, query } from 'firebase/firestore';
+import { DocumentData, QuerySnapshot, doc, onSnapshot } from 'firebase/firestore';
 import { NewWordType } from '../../types/word';
 import { firestore } from '../../firebase';
 import { useUserAuth } from '../UserAuthContext';

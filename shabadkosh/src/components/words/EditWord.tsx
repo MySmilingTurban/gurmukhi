@@ -1,14 +1,14 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from 'react';
 import { Card } from 'react-bootstrap';
 import { useParams } from 'react-router-dom';
-import { Button, Form, FormControlProps } from 'react-bootstrap';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Button, Form } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 import { Timestamp, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
 import { NewSentenceType } from '../../types/sentence';
-import { addQuestion, addSentence, addWord, deleteQuestion, deleteSentence, questionsCollection, sentencesCollection, updateQuestion, updateSentence, updateWord } from '../util/controller';
+import { deleteQuestion, deleteSentence, questionsCollection, sentencesCollection, updateQuestion, updateSentence, updateWord } from '../util/controller';
 import { auth, firestore } from '../../firebase';
 import { NewQuestionType } from '../../types/question';
-import { TimestampType } from '../../types/timestamp';
 import { NewWordType } from '../../types/word';
 import { useUserAuth } from '../UserAuthContext';
 
@@ -120,11 +120,6 @@ const EditWord = () => {
     fetchSentence();
     fetchQuestions();
   }, []);
-  
-  function convertTimestampToDate(timestamp: TimestampType) {
-    const timestampDate = new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
-    return timestampDate.toLocaleString('en-us', { year:'numeric', month:'short', day:'numeric', hour:'numeric', minute:'numeric', second:'numeric'});
-  }
 
   const fillFormValues = (word: any) => {
     const formVal = {} as any;
@@ -202,18 +197,6 @@ const EditWord = () => {
     });
 
     console.log('Sentences: ', sentences);
-  };
-
-  const removeAllSentences = (e:any) => {
-    e.preventDefault();
-    setSentences([]);
-    const newSFormValues = {} as any;
-    for (const key in formValues) {
-      if (!key.match(/sentence\d+/) && !key.match(/translation\d+/)) {
-        newSFormValues[key] = formValues[key];
-      }
-    }
-    setFormValues(newSFormValues);
   };
 
   const changeSentence = (event: any) => {
@@ -431,12 +414,6 @@ const EditWord = () => {
     setSubmitted(true);
   }
 
-  const unsetSubmitted = () => {
-    setSubmitted(false);
-    // refresh page
-    window.location.reload();
-  }
-
   const navigate = useNavigate();
 
   if (isLoading) return <h2>Loading...</h2>
@@ -495,7 +472,7 @@ const EditWord = () => {
         <Form.Group className='mb-3' controlId='status' onChange={handleChange}>
           <Form.Label>Status</Form.Label>
           <Form.Select aria-label='Default select example' defaultValue={Object.keys(status).includes(word.status ?? '') ? word.status : (user.role === 'reviewer' ? 'reviewing' : 'creating')}>
-            {Object.entries(status).map((ele, idx) => {
+            {Object.entries(status).map((ele) => {
               const [key, value] = ele;
               return (
                 <option key={key+value.toString()} value={key}>{value}</option>
@@ -557,7 +534,7 @@ const EditWord = () => {
                 </Form.Control.Feedback>
 
                 Type: <Form.Select aria-label='Default select example' id={`type${idx}`} value={question.type} onChange={(e) => changeQuestion(e)}>
-                  {types.map((ele, idx) => {
+                  {types.map((ele) => {
                     return (
                       <option key={ele} value={ele}>{ele}</option>
                       );
