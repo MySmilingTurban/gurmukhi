@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 
 const Search = () => {
   const [query, setQuery] = useState('');
-  const [ isLoading, setIsLoading ] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [words, setWords] = useState<NewWordType[]>([]);
   const [filteredWords, setFilteredWords] = useState<NewWordType[]>([]);
   const navigate = useNavigate();
@@ -46,7 +46,6 @@ const Search = () => {
     setIsLoading(true);
     onSnapshot(wordsCollection, (snapshot:
       QuerySnapshot<DocumentData>) => {
-      // console.log("snapshot", snapshot);
       const data = snapshot.docs.map((doc) => {
           return {
             id: doc.id,

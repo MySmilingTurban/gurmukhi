@@ -18,7 +18,6 @@ function Users() {
     if (user?.role !== 'admin') {
         onSnapshot(usersCollection, (snapshot:
         QuerySnapshot<DocumentData>) => {
-        console.log('snapshot', snapshot);
         setUsers(
             snapshot.docs.map((doc) => {
             return {

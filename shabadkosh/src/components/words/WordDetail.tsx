@@ -1,15 +1,16 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { doc, getDoc, getDocs, query, where } from 'firebase/firestore';
+import { DocumentReference, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
-import { Breadcrumb, Button, ButtonGroup, Card, ListGroup } from 'react-bootstrap';
+import { Breadcrumb, Button, ButtonGroup, Card, ListGroup, NavLink } from 'react-bootstrap';
 import { useNavigate, useParams } from 'react-router-dom';
 import { firestore } from '../../firebase';
 import { NewWordType } from '../../types/word';
-import { deleteWord, questionsCollection, reviewWord, sentencesCollection } from '../util/controller';
+import { deleteWord, getWordlist, questionsCollection, reviewWord, sentencesCollection } from '../util/controller';
 import { NewSentenceType } from '../../types/sentence';
 import { TimestampType } from '../../types/timestamp';
 import { NewQuestionType } from '../../types/question';
 import { useUserAuth } from '../UserAuthContext';
+import { WordlistType } from '../../types/wordlist';
 
 function WordDetail() {
   const { wordid } = useParams();
@@ -18,9 +19,9 @@ function WordDetail() {
   // fetch a single word from the database
   const getWord = doc(firestore, `words/${wordid}`);
 
-  const [ found, setFound ] = useState<boolean>(true);
-  const [ isLoading, setIsLoading ] = useState<boolean>(false);
-  const [ word, setWord ] = useState<NewWordType>({
+  const [found, setFound] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [word, setWord] = useState<NewWordType>({
     id: '',
     created_at: {
       seconds: 0,
@@ -33,10 +34,12 @@ function WordDetail() {
     created_by: '',
     updated_by: ''
   });
-  const [ sentences, setSentences ] = useState<NewSentenceType[]>([]);
-  const [ questions, setQuestions ] = useState<NewQuestionType[]>([]);
+  const [sentences, setSentences] = useState<NewSentenceType[]>([]);
+  const [questions, setQuestions] = useState<NewQuestionType[]>([]);
+  const [wordlists, setWordlists] = useState<WordlistType[]>([]);
 
   useEffect(() => {
+    let localWlist = [] as any;
     const fetchWord = async () => {
       setIsLoading(true);
       const docSnap = await getDoc(getWord);
@@ -49,12 +52,20 @@ function WordDetail() {
           updated_by: docSnap.data().updated_by,
           ...docSnap.data(),
         };
-        setWord(newWordObj);
-        setIsLoading(false);
+        localWlist = docSnap.data()?.wordlists === undefined ? [] : docSnap.data().wordlists.map(async (ele: DocumentReference) => {
+          const wlist = await getWordlist(ele).then((val: any) => {
+            const d = val.data()
+            setWordlists([...wordlists, d])
+          })
+          return wlist
+        })
+        setWord(newWordObj)
+        setWordlists(localWlist)
+        setIsLoading(false)
       } else {
-        console.log('No such document!');
-        setFound(false);
-        setIsLoading(false);
+        console.log('No such document!')
+        setFound(false)
+        setIsLoading(false)
       }
     };
 
@@ -91,6 +102,7 @@ function WordDetail() {
         setIsLoading(false);
       }
     };
+
     fetchWord();
     fetchSentence();
     fetchQuestions();
@@ -132,6 +144,10 @@ function WordDetail() {
     e.target.parentElement.style.display = 'none';
   };
 
+  const wordlistData = wordlists?.map((ele: any) => {
+    return (<NavLink style={{width: '150px', border: '1px solid #000', borderRadius: 20, textAlign: 'center', margin: 5}} href={`/wordlists/${ele.id}`} key={ele.id} >{ele.name}</NavLink>)
+  })
+
   if (isLoading) return <h2>Loading...</h2>;
   if (!found) return <h2>Word not found!</h2>;
   return (
@@ -170,14 +186,15 @@ function WordDetail() {
           <br />
           <h4><b>ਅਰਥ:</b> {word.meaning_punjabi}</h4>
           <h4><b>Meaning:</b> {word.meaning_english}</h4>
+          {word.part_of_speech && (<h4><b>Part of Speech:</b> {word.part_of_speech}</h4>)}
 
           <br />
           <h5><b>Synonyms</b></h5>
           <div className='d-flex'>
             {word.synonyms && word.synonyms.length ? (
-              word.synonyms.map((synonym) => {
+              word.synonyms.map((synonym, idx) => {
                 return (
-                  <Card key={'s' + word.id} style={{ width: 'auto', margin: 5, padding: 0 }}>
+                  <Card key={'s' + idx} style={{ width: 'auto', margin: 5 }}>
                     <Card.Body>
                       <Card.Title>{synonym}</Card.Title>
                     </Card.Body>
@@ -191,9 +208,9 @@ function WordDetail() {
           <h5><b>Antonyms</b></h5>
           <div className='d-flex'>
             {word.antonyms && word.antonyms.length ? (
-              word.antonyms.map((antonym) => {
+              word.antonyms.map((antonym, idx) => {
                 return (
-                  <Card key={'a' + word.id} style={{ width: 'auto', margin: 5, padding: 0 }}>
+                  <Card key={'a' + idx} style={{ width: 'auto', margin: 5 }}>
                     <Card.Body>
                       <Card.Title>{antonym}</Card.Title>
                     </Card.Body>
@@ -234,6 +251,17 @@ function WordDetail() {
               })
             ) : ('No questions!')}
           </ListGroup>
+
+          <br />
+          {wordlistData && wordlistData.length !== 0 &&
+            (
+              <div>
+                <h5>Wordlist{wordlistData.length > 1 ? 's' : '' }</h5>
+                {wordlistData}
+                {/* <h3>{JSON.stringify(wordlists)}</h3> */}
+              </div>
+            )
+          }
 
           <p  className='mt-3' hidden={!word.notes}>
             <b>Notes:</b> {word.notes}

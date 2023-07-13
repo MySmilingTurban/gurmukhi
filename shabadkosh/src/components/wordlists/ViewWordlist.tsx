@@ -1,10 +1,10 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from 'react'
-import { Card, Breadcrumb, ButtonGroup, Button } from 'react-bootstrap';
-import { useParams } from 'react-router-dom';
+import { Card, Breadcrumb, ButtonGroup, Button, NavLink } from 'react-bootstrap';
+import { useNavigate, useParams } from 'react-router-dom';
 import { MiniWord } from '../../types/word';
-import { getDoc, doc } from 'firebase/firestore';
-import { deleteWordlist, getWordsByIdList } from '../util/controller';
+import { getDoc, doc, getDocs, query, where } from 'firebase/firestore';
+import { deleteWordlist, removeWordlistConn, wordsCollection } from '../util/controller';
 import { firestore } from '../../firebase';
 import { TimestampType } from '../../types/timestamp';
 import { useUserAuth } from '../UserAuthContext';
@@ -12,12 +12,35 @@ import { useUserAuth } from '../UserAuthContext';
 function ViewWordlist() {
     const {wlid} = useParams();
     const {user} = useUserAuth();
-    const getWordlist = doc(firestore, `wordlists/${wlid}`);
+    const navigate = useNavigate();
+    const getWordlist = doc(firestore, `/wordlists/${wlid}`);
 
     const [wordlist, setWordlist] = useState<any>({});
     const [found, setFound] = useState<boolean>(true);
     const [words, setWords] = useState<MiniWord[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(false);
+
+    useEffect(() => {
+        const fetchWlists = async () => {
+            setIsLoading(true);
+            const q = query(wordsCollection, where('wordlists', 'array-contains', getWordlist));
+            const querySnapshot = await getDocs(q);
+            if (!querySnapshot.empty) {
+                const listOfWords = querySnapshot.docs.map((doc) => {
+                    return {
+                        id: doc.id,
+                        word: doc.data().word
+                    } as MiniWord;
+                });
+                console.log('List of words: ', listOfWords)
+                setWords(listOfWords);
+                setIsLoading(false);
+            } else {
+            console.log('No sentences!');
+            }
+        }
+        fetchWlists()
+    }, [])
 
     useEffect(() => {
         const fetchWordlist = async () => {
@@ -29,18 +52,17 @@ function ViewWordlist() {
                     created_at: docSnap.data().created_at,
                     updated_at: docSnap.data().updated_at,
                     created_by: docSnap.data().created_by,
-                    words: docSnap.data().words,
                     ...docSnap.data(),
                 };
                 setWordlist(newWordObj);
-                const data = await getWordsByIdList(newWordObj.words);
-                const listOfWords = data?.map((ele) => {
-                    return {
-                        id: ele.id,
-                        word: ele.data().word
-                    } as MiniWord;
-                })
-                setWords(listOfWords ?? []);
+                // const data = await getWordsByIdList(newWordObj.words);
+                // const listOfWords = data?.map((ele) => {
+                //     return {
+                //         id: ele.id,
+                //         word: ele.data().word
+                //     } as MiniWord;
+                // })
+                // setWords(listOfWords ?? []);
                 setIsLoading(false);
             } else {
                 console.log('No such document!');
@@ -49,7 +71,7 @@ function ViewWordlist() {
             }
         };
         fetchWordlist();
-      }, []);
+    }, []);
 
     function convertTimestampToDate(timestamp: TimestampType) {
         const timestampDate = new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
@@ -57,19 +79,26 @@ function ViewWordlist() {
     }
     
     const wordsData = words?.map((ele) => {
-        return (<li style={{width: '150px'}} key={ele.id}>{ele.word}</li>)
+        return (<li key={ele.id}><NavLink style={{width: '150px', border: '1px solid #000', borderRadius: 20, textAlign: 'center', margin: 5}} href={`/words/${ele.id}`} key={ele.id}>{ele.word}</NavLink></li>)
     });
     
     const editUrl = `/wordlists/edit/${wordlist.id}`;
     const delWordlist = (wordlist: any) => {
-        const response = confirm(`Are you sure you want to delete this word: ${wordlist.name}? \n This action is not reversible.`);
+        const response = confirm(`Are you sure you want to delete this wordlist: ${wordlist.name}? \n This action is not reversible.`);
         if (response) {
+          setIsLoading(true);
           const getWordlist = doc(firestore, `wordlists/${wordlist.id}`);
-          deleteWordlist(getWordlist).then(() => {
-            alert('Word deleted!');
-            console.log(`Deleted word with id: ${wordlist.id}!`);
+          removeWordlistConn(words, getWordlist).then(() => {
+            deleteWordlist(getWordlist).then(() => {
+                setIsLoading(false)
+                alert('Wordlist deleted!');
+                navigate('/wordlists')
+                console.log(`Deleted wordlist with id: ${wordlist.id}!`);
+            }).catch((error) => {
+                console.log('error while deleting wordlist', error);
+            });
           }).catch((error) => {
-            console.log(error);
+            console.log('error while removing wordlist connections', error);
           });
         } else {
           console.log('Operation abort!');
@@ -94,17 +123,17 @@ function ViewWordlist() {
                 </ButtonGroup>
                 <span className="badge bg-primary" style={{width: '6rem'}}>{wordlist.status}</span>
                 <br /><br />
-                <h5><b>Words:</b></h5>
+                <h5><b>Words: {words.length}</b></h5>
                 <ul>
                     {wordsData}
                 </ul>
                 <div className="d-flex flex-column justify-content-evenly">
-                    <p>
+                    <span>
                         <h5><b>Metadata</b></h5>
                         <h6>&nbsp;Curriculum: {wordlist.metadata?.curriculum}</h6>
                         <h6>&nbsp;Level: {wordlist.metadata?.level}</h6>
                         <h6>&nbsp;Subgroup: {wordlist.metadata?.subgroup}</h6>
-                    </p>
+                    </span>
 
                     <p  className="mt-3" hidden={!wordlist.notes}>
                         <b>Notes:</b> {wordlist.notes}

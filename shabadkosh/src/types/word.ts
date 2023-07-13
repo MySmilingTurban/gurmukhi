@@ -1,3 +1,4 @@
+import { DocumentReference } from 'firebase/firestore';
 import { TimestampType } from './timestamp';
 
 export interface NewWordType {
@@ -7,6 +8,7 @@ export interface NewWordType {
     translation?: string,
     meaning_english?: string,
     meaning_punjabi?: string,
+    part_of_speech?: string,
     images?: string[],
     antonyms?: string[],
     synonyms?: string[],
@@ -16,6 +18,7 @@ export interface NewWordType {
     updated_at: TimestampType,
     updated_by: string,
     notes?: string,
+    wordlists?: DocumentReference[]
 }
 
 export interface MiniWord {

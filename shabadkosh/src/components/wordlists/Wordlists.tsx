@@ -1,11 +1,10 @@
 
-import { onSnapshot, QuerySnapshot, DocumentData, doc } from 'firebase/firestore';
+import { onSnapshot, QuerySnapshot, DocumentData } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react'
 import { useUserAuth } from '../UserAuthContext';
-import { deleteWordlist, wordlistsCollection } from '../util/controller';
+import { wordlistsCollection } from '../util/controller';
 import { Badge, Button, ButtonGroup, ListGroup } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import { firestore } from '../../firebase';
 
 function Wordlists() {
     const [ isLoading, setIsLoading ] = useState<boolean>(true);
@@ -15,21 +14,20 @@ function Wordlists() {
     if (!user) navigate('/');
   
     useEffect(() => {
-        setIsLoading(true);
-        onSnapshot(wordlistsCollection, (snapshot:
-        QuerySnapshot<DocumentData>) => {
-        console.log('snapshot', snapshot);
+      setIsLoading(true);
+      onSnapshot(wordlistsCollection, (snapshot:
+      QuerySnapshot<DocumentData>) => {
         setWordlists(
-            snapshot.docs.map((doc) => {
+          snapshot.docs.map((doc) => {
             return {
                 id: doc.id,
                 ...doc.data(),
             };
-            })
+          })
         );
-        });
+      });
 
-        setIsLoading(false);
+      setIsLoading(false);
     }, []);
 
     const sortWordlists = (unwordlists: any[]) => {
@@ -39,23 +37,8 @@ function Wordlists() {
         return sortedWordlists;
     };
 
-    const delWordlist = (wordlist: any) => {
-      const response = confirm(`Are you sure you want to delete this word: ${wordlist.name}? \n This action is not reversible.`);
-      if (response) {
-        const getWordlist = doc(firestore, `wordlists/${wordlist.id}`);
-        deleteWordlist(getWordlist).then(() => {
-          alert('Word deleted!');
-          console.log(`Deleted word with id: ${wordlist.id}!`);
-        }).catch((error) => {
-          console.log(error);
-        });
-      } else {
-        console.log('Operation abort!');
-      }
-    }
-
     const wordlistsData = sortWordlists(wordlists)?.map((wordlist) => {
-        const viewUrl = `/wordlist/${wordlist.id}`;
+        const viewUrl = `/wordlists/${wordlist.id}`;
         const editUrl = `/wordlists/edit/${wordlist.id}`;
         return (
             <ListGroup.Item
@@ -75,7 +58,6 @@ function Wordlists() {
                 <ButtonGroup>
                   <Button href={viewUrl} style={{backgroundColor: 'transparent', border: 'transparent'}}>👁️</Button>
                   <Button href={editUrl} style={{backgroundColor: 'transparent', border: 'transparent'}}>🖊️</Button>
-                  <Button onClick={() => delWordlist(wordlist)} style={{backgroundColor: 'transparent', border: 'transparent'}} hidden={user?.role != 'admin'}>🗑️</Button>
                 </ButtonGroup>
                 <Badge pill bg="primary" text="white" hidden={!wordlist.status}>
                   {wordlist.status}
@@ -92,28 +74,7 @@ function Wordlists() {
             <Button href='/wordlists/new'>Add new Wordlist</Button>
             {wordlists && wordlists.length ? (
                 <ListGroup>
-                    {wordlistsData
-                    // sortWordlists(wordlists)?.map((ele, idx) => {
-                    //     return <Card className='p-4'>
-                    //         <Card.Body>
-                    //         <Card.Title>{ele.name}</Card.Title>
-                    //         <Card.Text>
-                    //             Status: {ele.status}<br/>
-                    //             Metadata:<br/>
-                    //             <ul>
-                    //                 <li>Curriculum: {ele.metadata.curriculum}</li>
-                    //                 <li>Level: {ele.metadata.level}</li>
-                    //                 <li>Subgroup: {ele.metadata.subgroup}</li>
-                    //             </ul>
-
-                    //             <Badge pill bg="primary" text="white" hidden={!ele.status}>
-                    //                 {ele.status}
-                    //             </Badge>
-                    //         </Card.Text>
-                    //         </Card.Body>
-                    //     </Card>
-                    // })
-                    }
+                    {wordlistsData}
                 </ListGroup>
             ) : <h2>No wordlists found. Please create one.</h2>
             }

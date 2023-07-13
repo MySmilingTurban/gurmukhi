@@ -141,7 +141,7 @@ function App() {
           />
 
           <Route
-            path="/wordlist/:wlid"
+            path="/wordlists/:wlid"
             element={
               <ProtectedRoute>
                 <ViewWordlist />

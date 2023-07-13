@@ -1,39 +1,16 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { DocumentData, QuerySnapshot, Timestamp, onSnapshot } from 'firebase/firestore';
+import { DocumentData, QuerySnapshot, Timestamp, doc, getDocs, onSnapshot, query, where } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { Form, Button } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import { useUserAuth } from '../UserAuthContext';
-import { wordsCollection, addNewWordlist } from '../util/controller';
-import {Multiselect} from 'multiselect-react-dropdown';
-import { MiniWord } from '../../types/word';
+import { addNewWordlist} from '../util/controller';
+import { auth, firestore } from '../../firebase';
 
 const AddWordlist = () => {
     const [formValues, setFormValues] = useState({} as any);
     const [validated, setValidated] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [words, setWords] = useState<MiniWord[]>([]);
-    const [selectedWords, setSelectedWords] = useState<MiniWord[]>([]);
-    const {user} = useUserAuth();
-
-    useEffect(() => {
-        setIsLoading(true);
-        onSnapshot(wordsCollection, (snapshot:
-        QuerySnapshot<DocumentData>) => {
-        console.log('snapshot', snapshot);
-        setWords(
-            snapshot.docs.map((doc) => {
-            return {
-                id: doc.id,
-                word: doc.data().word,
-            };
-            })
-        );
-        });
-
-        setIsLoading(false);
-    }, []);
 
     const resetState = () => {
         setValidated(false);
@@ -41,16 +18,6 @@ const AddWordlist = () => {
 
     const handleChange = (e: any) => {
         setFormValues({ ...formValues, [e.target.id]: e.target.value });
-    }
-
-    const onSelect = (selectedList: [], selectedItem: any) => {
-      // console.log("Selected list: ", selectedList, ", selected item: ", selectedItem);
-      setSelectedWords(selectedList);
-    }
-
-    const onRemove = (selectedList: [], removedItem: any) => {
-      // console.log("Selected list: ", selectedList, ", removed item: ", removedItem);
-      setSelectedWords(selectedList);
     }
 
     const handleSubmit = (e: any) => {
@@ -68,10 +35,9 @@ const AddWordlist = () => {
         // console.log("Validated!");
         const formData = {
           ...formValues,
-          words: selectedWords.map((ele) => ele.id)
         }
+        console.log('Form data: ', formData);
 
-        // console.log("Form data: ", formData);
         addWordlist(formData);
     }
 
@@ -86,17 +52,18 @@ const AddWordlist = () => {
             level: formData.level ?? '',
             subgroup: formData.subgroup ?? ''
           },
-          words: formData.words ?? [],
           created_at: Timestamp.now(),
-          created_by: user.username,
+          created_by: auth.currentUser?.email,
           updated_at: Timestamp.now(),
-          updated_by: user.username,
+          updated_by: auth.currentUser?.email,
           notes: formData.notes ?? ''
         })
         .then((wordlist_id) => {
           console.log('Wordlist created with ID: ', wordlist_id)
         }).finally(() => {
           setIsLoading(false);
+        }).catch((err) => {
+          console.log('Error: ', err)
         });
 
         resetState();
@@ -157,18 +124,6 @@ const AddWordlist = () => {
                   );
                 })}
               </Form.Select>
-            </Form.Group>
-
-    
-            <Form.Group className="mb-3" controlId="words" >
-              <Form.Label>Words</Form.Label>
-              <Multiselect 
-                options={words}
-                displayValue="word"
-                showCheckbox={true}
-                onSelect={onSelect}
-                onRemove={onRemove}
-              />
             </Form.Group>
 
             <Form.Group className="mb-3" controlId="notes" onChange={handleChange}>

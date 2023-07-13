@@ -1,6 +1,6 @@
-import { DocumentReference, addDoc, collection, deleteDoc, documentId, getDocs, query, setDoc, where } from 'firebase/firestore';
-import {firestore as db} from '../../firebase';
-import { NewWordType } from '../../types/word';
+import { DocumentReference, addDoc, arrayRemove, arrayUnion, collection, deleteDoc, doc, documentId, getDoc, getDocs, query, setDoc, where, writeBatch } from 'firebase/firestore';
+import {firestore as db, firestore} from '../../firebase';
+import { MiniWord, NewWordType } from '../../types/word';
 
 export default db; 
 
@@ -122,6 +122,11 @@ export const addNewWordlist = async (wordlistData: any) => {
     return newWordlist.id;
 }
 
+export const getWordlist = async (wordlistRef: DocumentReference) => {
+    const gotWlist = await getDoc(wordlistRef);
+    return gotWlist;
+}
+
 export const updateWordlist = async (wordlist: DocumentReference, wordlistData: any) => {
     const updatedWordlist = await setDoc(wordlist, {...wordlistData});
     console.log('Updated Wordlist!');
@@ -131,4 +136,33 @@ export const updateWordlist = async (wordlist: DocumentReference, wordlistData: 
 export const deleteWordlist = async (wordlist: DocumentReference) => {
     const delWordlist = await deleteDoc(wordlist);
     return delWordlist;
+}
+
+export const removeWordlistConn = async (wordIds: MiniWord[], wordlist: DocumentReference) => {
+    const batch = writeBatch(firestore)
+    if (wordIds.length > 0) {
+        wordIds.map((word: MiniWord) => {
+            const wordRef = doc(firestore, 'words', word.id)
+            batch.update(wordRef, {wordlists: arrayRemove(wordlist)})
+        })
+    }
+    const res = await batch.commit()
+    return res
+}
+export const setWordlistInWords = async (addWordIds: MiniWord[], remWordIds: MiniWord[], wordlist: DocumentReference) => {
+    const batch = writeBatch(firestore)
+    if (addWordIds.length > 0) {
+        addWordIds.map((word: MiniWord) => {
+            const wordRef = doc(firestore, 'words', word.id)
+            batch.update(wordRef, {wordlists: arrayUnion(wordlist)})
+        })
+    }
+    if (remWordIds.length > 0) {
+        remWordIds.map((word: MiniWord) => {
+            const wordRef = doc(firestore, 'words', word.id)
+            batch.update(wordRef, {wordlists: arrayRemove(wordlist)})
+        })
+    }
+    const res = await batch.commit()
+    return res
 }

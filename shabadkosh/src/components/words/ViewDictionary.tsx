@@ -10,6 +10,7 @@ import { useUserAuth } from '../UserAuthContext';
 function ViewDictionary() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState('');
   const [listView, setListView] = useState<boolean>(false);
   const [words, setWords] = useState<NewWordType[]>([]);
   const [filteredWords, setFilteredWords] = useState<NewWordType[]>([]);
@@ -21,30 +22,22 @@ function ViewDictionary() {
   };
 
   useEffect(() => {
-    console.log('query', query);
-    if (query === '') {
-      setFilteredWords(sortWords(words));
-    } else if (query.match('[\u0A00-\u0A76,.]+')) {
-      // console.log('Gurmukhi' , query);
-
-      const localWords = words.filter((word) => word.word?.includes(query));
-      setFilteredWords(sortWords(localWords));
+    let localWords = words;
+    if (query.match('[\u0A00-\u0A76,.]+')) {
+      localWords = words.filter((word) => word.word?.includes(query));
     } else if (query.match('[a-zA-Z ]+')) {
-      // console.log('English', query);
-      
-      const localWords = words.filter((word) => word.translation?.toLowerCase().includes(query));
-      setFilteredWords(sortWords(localWords));
+      localWords = words.filter((word) => word.translation?.toLowerCase().includes(query));
     } else {
-      // console.log(query);
+      console.log(query);
     }
+    handleFilter(filter, localWords);
 
-  }, [query]);
+  }, [query, filter]);
 
   useEffect(() => {
     setIsLoading(true);
     onSnapshot(wordsCollection, (snapshot:
       QuerySnapshot<DocumentData>) => {
-      console.log('snapshot', snapshot);
       const data = snapshot.docs.map((doc) => {
           return {
             id: doc.id,
@@ -61,11 +54,6 @@ function ViewDictionary() {
 
     setIsLoading(false);
   }, []);
-
-  // onError function which changes image source to nothing.jpeg
-  const onError = (e: any) => {
-    e.target.style.display = 'none';
-  };
 
   // console.log('Words', words);
   const sortWords = (unwords: NewWordType[]) => {
@@ -99,12 +87,22 @@ function ViewDictionary() {
     }
   }
 
+  const handleFilter = (filterVal = filter, filterList = words) => {
+    if (filterVal === 'created_by_me') {
+      filterList = filterList.filter((val) => val.created_by === user.email)
+    } else if (filterVal === 'am_working_on') {
+      filterList = filterList.filter((val) => (val.created_by === user.email || val.updated_by === user.email) && val.status?.includes('ing'))
+    } else if (filterVal === 'updated_by_me') {
+      filterList = filterList.filter((val) => val.updated_by === user.email)
+    }
+
+    setFilteredWords(sortWords(filterList));
+  }
+
   const wordsData = sortWords(filteredWords) && sortWords(filteredWords).length ? 
     sortWords(filteredWords)?.map((word) => {
       const detailUrl = `/words/${word.id}`;
       const editUrl = `/edit/${word.id}`;
-      const punjabiMeaning = word.meaning_punjabi && word.meaning_punjabi.length > 0 ? (word.meaning_punjabi[-1] !== '।' ? word.meaning_punjabi + '।' : word.meaning_punjabi) : '';
-      const englishMeaning = word.meaning_english && word.meaning_english.length > 0 ? (word.meaning_english[-1] !== '।' ? word.meaning_english + '.' : word.meaning_english) : '';
       if (listView) {
         return (
           <ListGroup.Item
@@ -131,14 +129,14 @@ function ViewDictionary() {
       } else {
         return  (
           <Card className='p-2 wordCard' key={word.id} style={{ width: '20rem' }}>
-            <Card.Img variant='top' src={word.images && word.images.length ? word.images[0] : require('../../assets/nothing.jpeg')} onError={onError} />
-            <Card.Body>
-              <Card.Title>{word.word} ({word.translation})</Card.Title>
-              <Card.Text >
-                  <b>Meaning: </b><br/>
-                  &quot;{punjabiMeaning}&quot;<br/>
-                  <i>{englishMeaning}</i>
-              </Card.Text>
+            {/* <Card.Img variant='top' src={word.images && word.images.length ? word.images[0] : require('../../assets/nothing.jpeg')} onError={onError} /> */}
+            <Card.Body className='d-flex flex-column justify-content-center'>
+              <div className='d-flex flex-row justify-content-between align-items-center'>
+                <Card.Title>{word.word}<br/>({word.translation})</Card.Title>
+                <Badge pill bg='primary' text='white' hidden={!word.status} style={{ alignSelf: 'flex-start' }}>
+                  {word.status}
+                </Badge>
+              </div>
               <ButtonGroup>
                 <Button href={detailUrl} variant='success'>View</Button>
                 <Button href={editUrl}>Edit</Button>
@@ -167,6 +165,17 @@ function ViewDictionary() {
             onChange={(e) => setQuery(e.target.value)}
           />
         </Form.Group>
+
+        <Form.Group controlId='filter' className='mt-4' onChange={(e: any) => setFilter(e.target.value ?? '')}>
+          <Form.Label>Filter</Form.Label>
+          <Form.Select defaultValue={filter}>
+            <option key={'all'} value={'all'}>Show All</option>
+            <option key={'cbyme'} value={'created_by_me'}>Created by me</option>
+            <option key={'amwon'} value={'am_working_on'}>I&apos;m working on</option>
+            <option key={'lupme'} value={'updated_by_me'}>Last updated by me</option>
+          </Form.Select>
+        </Form.Group>
+
       </Form>
         {filteredWords && filteredWords.length ? (
           <div className='d-flex ms-2 justify-content-evenly'>

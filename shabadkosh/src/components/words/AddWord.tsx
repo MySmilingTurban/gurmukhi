@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button, Card, Form } from 'react-bootstrap';
 import { NewSentenceType } from '../../types/sentence';
 import { useNavigate } from 'react-router-dom';
-import { addQuestion, addSentence, addWord } from '../util/controller';
-import { Timestamp } from 'firebase/firestore';
-import { auth } from '../../firebase';
+import { addQuestion, addSentence, addWord, wordlistsCollection } from '../util/controller';
+import { DocumentData, DocumentReference, QuerySnapshot, Timestamp, doc, onSnapshot } from 'firebase/firestore';
+import { auth, firestore } from '../../firebase';
 import { NewQuestionType } from '../../types/question';
 import { useUserAuth } from '../UserAuthContext';
+import { WordlistType } from '../../types/wordlist';
+import Multiselect from 'multiselect-react-dropdown';
 
 const types = ['context', 'image', 'meaning', 'definition'];
 
@@ -14,6 +16,8 @@ const AddWord = () => {
   const [formValues, setFormValues] = useState({} as any);
   const [sentences, setSentences] = useState<NewSentenceType[]>([]);
   const [questions, setQuestions] = useState<NewQuestionType[]>([]);
+  const [wordlists, setWordlists] = useState<WordlistType[]>([]);
+  const [selectedWordlists, setSelectedWordlists] = useState<DocumentReference[]>([]);
   const [validated, setValidated] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -37,6 +41,33 @@ const AddWord = () => {
       'reviewing': 'Review in progress',
       'reviewed': 'Reviewed'
     }
+  }
+
+  useEffect(() => {
+    setIsLoading(true);
+    onSnapshot(wordlistsCollection, (snapshot:
+    QuerySnapshot<DocumentData>) => {
+      setWordlists(
+        snapshot.docs.map((doc) => {
+          return {
+              id: doc.id,
+              ...doc.data()
+          };
+        })
+      );
+    });
+
+    setIsLoading(false);
+  }, []);
+
+  const onSelect = (selectedList: [], selectedItem: any) => {
+    console.log('selected item: ', selectedItem);
+    setSelectedWordlists(selectedList);
+  }
+
+  const onRemove = (selectedList: [], removedItem: any) => {
+    console.log('removed item: ', removedItem);
+    setSelectedWordlists(selectedList);
   }
 
   const addNewSentence = (e: any) => {
@@ -232,9 +263,9 @@ const AddWord = () => {
     e.preventDefault();
     e.stopPropagation();
     
-    console.log('Form Values: ', formValues);
-    console.log('Sentences: ', sentences);
-    console.log('Questions: ', questions);
+    // console.log('Form Values: ', formValues);
+    // console.log('Sentences: ', sentences);
+    // console.log('Questions: ', questions);
 
     const form = e.currentTarget;
     if (form.checkValidity() === false) {
@@ -251,16 +282,19 @@ const AddWord = () => {
       }
     });
 
-    console.log('Form data: ', formData);
-
+    
     formData['sentences'] = sentences;
     formData['questions'] = questions;
+    
+    // make list of docRefs from selectedWordlists
+    formData['wordlists'] = selectedWordlists.map((docu) => doc(firestore, `wordlists/${docu.id}`));
+    console.log('Form data: ', formData);
     addNewWord(formData);
   }
 
   const splitAndClear = (some: any) => {
     if (!some) return [];
-    const splitList = some.replaceAll(' ', '').split(',');
+    const splitList = some.split(',').map((ele: string) => ele.trim());
     // remove empty strings
     const arr = splitList.filter((str: string) => str != '');
     return arr;
@@ -269,16 +303,18 @@ const AddWord = () => {
   // connect the below function and call in handleSubmit
   const addNewWord = (formData: any) => {
     setIsLoading(true);
-    const {sentences, questions, ...form} = formData;
+    const {sentences, questions, wordlists, ...form} = formData;
 
     addWord({
       word: form.word,
       translation: form.translation,
       meaning_punjabi: form.meaning_punjabi ?? '',
       meaning_english: form.meaning_english ?? '',
+      part_of_speech: form.part_of_speech ?? '',
       synonyms: splitAndClear(form.synonyms) ?? [],
       antonyms: splitAndClear(form.antonyms) ?? [],
       images: splitAndClear(form.images) ?? [],
+      wordlists,
       status: form.status ?? 'creating',
       created_at: Timestamp.now(),
       updated_at: Timestamp.now(),
@@ -354,9 +390,17 @@ const AddWord = () => {
 
         <Form.Group className='mb-3' controlId='meaning_english' onChange={handleChange}>
           <Form.Label>Meaning (English)</Form.Label>
-          <Form.Control type='text' placeholder='Enter meaning' pattern='[\u0A00-\u0A76a-zA-Z0-9,. ]+' />
+          <Form.Control type='text' placeholder='Enter meaning' pattern='[\u0A00-\u0A76a-zA-Z0-9,". ]+' />
           <Form.Control.Feedback type='invalid'>
             Please enter meaning in English.
+          </Form.Control.Feedback>
+        </Form.Group>
+
+        <Form.Group className='mb-3' controlId='part_of_speech' onChange={handleChange}>
+          <Form.Label>Part of Speech</Form.Label>
+          <Form.Control type='text' placeholder='Enter part of speech' pattern='[\u0A00-\u0A76a-zA-Z, ]+' />
+          <Form.Control.Feedback type='invalid'>
+            Please enter part of speech in English.
           </Form.Control.Feedback>
         </Form.Group>
 
@@ -391,6 +435,17 @@ const AddWord = () => {
         <Form.Group className='mb-3' controlId='images' onChange={handleChange}>
           <Form.Label>Images</Form.Label>
           <Form.Control type='text' placeholder='imgUrl1, imgUrl2, ...' />
+        </Form.Group>
+
+        <Form.Group className="mb-3" controlId="words" >
+          <Form.Label>Choose Wordlist</Form.Label>
+          <Multiselect 
+            options={wordlists}
+            displayValue="name"
+            showCheckbox={true}
+            onSelect={onSelect}
+            onRemove={onRemove}
+          />
         </Form.Group>
 
         <Form.Group className='mb-3' onChange={handleChange}>
