@@ -6,11 +6,13 @@ import { DocumentData, QuerySnapshot, doc, onSnapshot } from 'firebase/firestore
 import { NewWordType } from '../../types/word';
 import { firestore } from '../../firebase';
 import { useUserAuth } from '../UserAuthContext';
+import { ostatus } from '../constants';
 
 function ViewDictionary() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('');
+  const [status, setStatus] = useState('');
   const [listView, setListView] = useState<boolean>(false);
   const [words, setWords] = useState<NewWordType[]>([]);
   const [filteredWords, setFilteredWords] = useState<NewWordType[]>([]);
@@ -30,9 +32,9 @@ function ViewDictionary() {
     } else {
       console.log(query);
     }
-    handleFilter(filter, localWords);
+    handleFilter(filter, status, localWords);
 
-  }, [query, filter]);
+  }, [query, filter, status]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -87,7 +89,7 @@ function ViewDictionary() {
     }
   }
 
-  const handleFilter = (filterVal = filter, filterList = words) => {
+  const handleFilter = (filterVal = filter, statusVal = status, filterList = words) => {
     if (filterVal === 'created_by_me') {
       filterList = filterList.filter((val) => val.created_by === user.email)
     } else if (filterVal === 'am_working_on') {
@@ -96,13 +98,18 @@ function ViewDictionary() {
       filterList = filterList.filter((val) => val.updated_by === user.email)
     }
 
+    console.log('filter w/o status: ', filterList)
+
+    filterList = filterList.filter((val) => val.status?.includes(statusVal))
+    console.log('filtered: ', filterList, ', status: ', statusVal)
+
     setFilteredWords(sortWords(filterList));
   }
 
   const wordsData = sortWords(filteredWords) && sortWords(filteredWords).length ? 
     sortWords(filteredWords)?.map((word) => {
       const detailUrl = `/words/${word.id}`;
-      const editUrl = `/edit/${word.id}`;
+      const editUrl = `/words/edit/${word.id}`;
       if (listView) {
         return (
           <ListGroup.Item
@@ -153,10 +160,13 @@ function ViewDictionary() {
   if (words.length === 0 || isLoading) return <h2>Loading...</h2>;
   return (
     <div className='container mt-2'>
-      <h2>Words</h2>
+      <div className='d-flex justify-content-between align-items-center'>
+        <h2>Words</h2>
+        <Button href='/words/new'>Add new</Button>
+      </div>
       <Button onClick={() => setListView(!listView)} className='button' variant='primary'>{listView ? 'Card View' : 'List View'}</Button>
-      <Form style={{width: '100%'}} onSubmit={handleSearch}>
-        <Form.Group controlId='formBasicSearch'>
+      <Form className='d-flex align-items-center' style={{width: '100%'}} onSubmit={handleSearch}>
+        <Form.Group controlId='formBasicSearch' style={{width: '70%'}}>
           <Form.Label>Search</Form.Label>
           <Form.Control
             type='text'
@@ -166,15 +176,29 @@ function ViewDictionary() {
           />
         </Form.Group>
 
-        <Form.Group controlId='filter' className='mt-4' onChange={(e: any) => setFilter(e.target.value ?? '')}>
-          <Form.Label>Filter</Form.Label>
-          <Form.Select defaultValue={filter}>
-            <option key={'all'} value={'all'}>Show All</option>
-            <option key={'cbyme'} value={'created_by_me'}>Created by me</option>
-            <option key={'amwon'} value={'am_working_on'}>I&apos;m working on</option>
-            <option key={'lupme'} value={'updated_by_me'}>Last updated by me</option>
-          </Form.Select>
-        </Form.Group>
+        <div className='d-flex align-items-center'>
+          <Form.Group controlId='filter' onChange={(e: any) => setFilter(e.target.value ?? '')}>
+            <Form.Label>Filter</Form.Label>
+            <Form.Select defaultValue={filter}>
+              <option key={'all'} value={'all'}>Show All</option>
+              <option key={'cbyme'} value={'created_by_me'}>Created by me</option>
+              <option key={'amwon'} value={'am_working_on'}>I&apos;m working on</option>
+              <option key={'lupme'} value={'updated_by_me'}>Last updated by me</option>
+            </Form.Select>
+          </Form.Group>
+
+          <Form.Group controlId='status' onChange={(e: any) => setStatus(e.target.value ?? '')}>
+            <Form.Label>Status</Form.Label>
+            <Form.Select defaultValue={status}>
+              <option key={'all'} value={''}>Show All</option>
+              {ostatus.map((ele) => {
+                return (
+                  <option key={ele} value={ele}>{ele.charAt(0).toUpperCase() + ele.slice(1)}</option>
+                  );
+              })}
+            </Form.Select>
+          </Form.Group>
+        </div>
 
       </Form>
         {filteredWords && filteredWords.length ? (

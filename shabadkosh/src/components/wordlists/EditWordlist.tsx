@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { DocumentData, QuerySnapshot, Timestamp, doc, getDoc, getDocs, onSnapshot, query, where } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
-import { Form, Button } from 'react-bootstrap';
+import { Form, Button, Card } from 'react-bootstrap';
 import { useNavigate, useParams } from 'react-router-dom';
 import { auth, firestore } from '../../firebase';
 import { wordsCollection, updateWordlist, setWordlistInWords } from '../util/controller';
@@ -173,7 +173,7 @@ const EditWordlist = () => {
     if (isLoading) return <div>Loading...</div>
     if (!found) return <h2>Wordlist not found!</h2>;
     return (
-        <div className='d-flex justify-content-center align-items-center background'>
+        <div className='d-flex justify-content-center align-items-center background container'>
           <Form className='rounded p-4 p-sm-3' hidden={submitted} noValidate validated={validated} onSubmit={handleSubmit}>
             <Form.Group className='mb-3' controlId='name' onChange={handleChange}>
               <Form.Label>Name</Form.Label>
@@ -239,13 +239,12 @@ const EditWordlist = () => {
                 Submit
             </Button>
           </Form>
-          {submitted ? <div className='d-flex justify-content-center align-items-center background'>
-            <div className='rounded p-4 p-sm-3'>
+          {submitted ? <Card className='d-flex justify-content-center align-items-center background'>
+            <Card.Body className='rounded p-4 p-sm-3'>
               <h3>Successfully updated wordlist!</h3>
-              {/* <Button variant='primary' onClick={unsetSubmitted}>Add another word</Button> */}
               <Button variant='primary' onClick={() => navigate('/wordlists')}>Back to Wordlists</Button>
-            </div>
-          </div> : null}
+            </Card.Body>
+          </Card> : null}
         </div>
       );
 }

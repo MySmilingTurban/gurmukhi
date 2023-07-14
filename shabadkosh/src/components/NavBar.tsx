@@ -21,7 +21,7 @@ const NavBar = () => {
                 id="basic-nav-dropdown"
               >
                 <NavDropdown.Item href="/words" >All words</NavDropdown.Item>
-                <NavDropdown.Item href="/create">Add Word</NavDropdown.Item>
+                <NavDropdown.Item href="/words/new">Add Word</NavDropdown.Item>
               </NavDropdown>
               <NavDropdown
                 title="Wordlists"

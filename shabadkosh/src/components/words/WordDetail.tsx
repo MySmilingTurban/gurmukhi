@@ -4,8 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { Breadcrumb, Button, ButtonGroup, Card, ListGroup, NavLink } from 'react-bootstrap';
 import { useNavigate, useParams } from 'react-router-dom';
 import { firestore } from '../../firebase';
-import { NewWordType } from '../../types/word';
-import { deleteWord, getWordlist, questionsCollection, reviewWord, sentencesCollection } from '../util/controller';
+import { MiniWord, NewWordType } from '../../types/word';
+import { deleteQuestionByWordId, deleteSentenceByWordId, deleteWord, getWordlist, getWordlistsByIdList, questionsCollection, reviewWord, sentencesCollection } from '../util/controller';
 import { NewSentenceType } from '../../types/sentence';
 import { TimestampType } from '../../types/timestamp';
 import { NewQuestionType } from '../../types/question';
@@ -39,7 +39,6 @@ function WordDetail() {
   const [wordlists, setWordlists] = useState<WordlistType[]>([]);
 
   useEffect(() => {
-    let localWlist = [] as any;
     const fetchWord = async () => {
       setIsLoading(true);
       const docSnap = await getDoc(getWord);
@@ -52,15 +51,25 @@ function WordDetail() {
           updated_by: docSnap.data().updated_by,
           ...docSnap.data(),
         };
-        localWlist = docSnap.data()?.wordlists === undefined ? [] : docSnap.data().wordlists.map(async (ele: DocumentReference) => {
-          const wlist = await getWordlist(ele).then((val: any) => {
-            const d = val.data()
-            setWordlists([...wordlists, d])
-          })
-          return wlist
-        })
+        let listOfWordlists = [] as WordlistType[];
+        if ('wordlists' in newWordObj) {
+          if (newWordObj.wordlists) {
+            const idListFromDocRefs = (newWordObj.wordlists as DocumentReference[]).map((ele: DocumentReference) => ele.id)
+            const data = await getWordlistsByIdList(idListFromDocRefs).then((data) => {
+              if (data !== undefined) {
+                listOfWordlists = data.map((ele) => {
+                  return {
+                      id: ele.id,
+                      ...ele.data()
+                  } as WordlistType;
+                })
+              }
+            })
+            console.log('loaded data: ', data === undefined)
+          }
+        }
+        setWordlists(listOfWordlists);
         setWord(newWordObj)
-        setWordlists(localWlist)
         setIsLoading(false)
       } else {
         console.log('No such document!')
@@ -113,14 +122,20 @@ function WordDetail() {
     return timestampDate.toLocaleString('en-us', { year:'numeric', month:'short', day:'numeric', hour:'numeric', minute:'numeric', second:'numeric'});
   }
 
-  const editUrl = `/edit/${wordid}`;
+  const editUrl = `/words/edit/${wordid}`;
   const delWord = (word: any) => {
-    const response = confirm(`Are you sure you want to delete this word: ${word.word}? \n This action is not reversible.`);
+    const response = confirm(`Are you sure you want to delete this word: ${word.word}? \nThis action will delete all sentences and questions for this word as well. \n This action is not reversible!`);
     if (response) {
       const getWord = doc(firestore, `words/${word.id}`);
+      setIsLoading(true)
       deleteWord(getWord).then(() => {
-        alert('Word deleted!');
-        navigate('/words');
+        deleteSentenceByWordId(word.id).then(() => {
+          deleteQuestionByWordId(word.id).then(() => {
+            alert('Word deleted!');
+            setIsLoading(false)
+            navigate('/words');
+          })
+        })
       });
     } else {
       console.log('Operation abort!');
@@ -141,7 +156,7 @@ function WordDetail() {
 
   const onError = (e: any) => {
     // make the parent element of the image to be invisible
-    e.target.parentElement.style.display = 'none';
+    // e.target.parentElement.style.display = 'none';
   };
 
   const wordlistData = wordlists?.map((ele: any) => {
@@ -170,18 +185,12 @@ function WordDetail() {
         <div className='d-flex flex-column justify-content-evenly'>
           <br />
           {word.images && word.images.length ? (
-            <Card className='p-2 wordCard' style={{ width: '20rem' }}>
-              <Card.Img variant='top' src={word.images[0]} onError={onError}/>
-            </Card>
-          ) : (
-            <Card className='p-2 wordCard' style={{ width: '20rem' }}>
-              <Card.Img
-                variant='top'
-                src={require('../../assets/nothing.jpeg')}
-                onError={onError}
-              />
-            </Card>
-          )}
+            word.images.map((img) => {
+              return (<Card className='p-2 wordCard' style={{ width: '20rem' }}>
+                <Card.Img variant='top' src={img} onError={onError}/>
+              </Card>)
+            })
+          ): null}
           <h3>{word.word} ({word.translation})</h3><span className='badge bg-primary' style={{width: '6rem'}}>{word.status}</span>
           <br />
           <h4><b>ਅਰਥ:</b> {word.meaning_punjabi}</h4>

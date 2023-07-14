@@ -114,7 +114,7 @@ function App() {
           />
 
           <Route
-            path="/create"
+            path="/words/new"
             element={
               <ProtectedRoute>
                 <AddWord />
@@ -122,7 +122,7 @@ function App() {
             }
           />
           <Route
-            path="/edit/:wordid"
+            path="/words/edit/:wordid"
             element={
               <ProtectedRoute>
                 <EditWord />

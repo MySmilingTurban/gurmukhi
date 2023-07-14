@@ -74,12 +74,15 @@ export const deleteSentence = async (sentence: DocumentReference) => {
 
 // delete sentence by word id
 export const deleteSentenceByWordId = async (wordId: string) => {
-    const querySnapshot = await getDocs(sentencesCollection);
-    querySnapshot.forEach((doc) => {
-        if (doc.data().wordId === wordId) {
-            deleteSentence(doc.ref);
-        }
-    });
+    const q = query(sentencesCollection, where('word_id', '==', wordId));
+    const querySnapshot = await getDocs(q).then((data) => {
+        data.docs.forEach((doc) => {
+            if (doc.data().word_id === wordId) {
+                deleteDoc(doc.ref);
+            }
+        });
+    })
+    return querySnapshot
 }
 
 // Questions collection
@@ -105,12 +108,15 @@ export const deleteQuestion = async (question: DocumentReference) => {
 
 // delete question by word id
 export const deleteQuestionByWordId = async (wordId: string) => {
-    const querySnapshot = await getDocs(questionsCollection);
-    querySnapshot.forEach((doc) => {
-        if (doc.data().wordId === wordId) {
-            deleteQuestion(doc.ref);
-        }
-    });
+    const q = query(questionsCollection, where('word_id', '==', wordId));
+    const querySnapshot = await getDocs(q).then((data) => {
+        data.docs.forEach((doc) => {
+            if (doc.data().word_id === wordId) {
+                deleteDoc(doc.ref);
+            }
+        });
+    })
+    return querySnapshot
 }
 
 // Wordlists collection
@@ -138,17 +144,28 @@ export const deleteWordlist = async (wordlist: DocumentReference) => {
     return delWordlist;
 }
 
+// get word from a list of word ids
+export const getWordlistsByIdList = async (idList: string[]) => {
+    if (idList.length > 0) {
+        const q = query(wordlistsCollection, where(documentId(), 'in', idList));
+        const result = await getDocs(q);
+        return result.docs;
+    }
+}
+
 export const removeWordlistConn = async (wordIds: MiniWord[], wordlist: DocumentReference) => {
     const batch = writeBatch(firestore)
     if (wordIds.length > 0) {
         wordIds.map((word: MiniWord) => {
             const wordRef = doc(firestore, 'words', word.id)
             batch.update(wordRef, {wordlists: arrayRemove(wordlist)})
+            console.log('removed conn from wordlist: ', word)
         })
     }
     const res = await batch.commit()
     return res
 }
+
 export const setWordlistInWords = async (addWordIds: MiniWord[], remWordIds: MiniWord[], wordlist: DocumentReference) => {
     const batch = writeBatch(firestore)
     if (addWordIds.length > 0) {

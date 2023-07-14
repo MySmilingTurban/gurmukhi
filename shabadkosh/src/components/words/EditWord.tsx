@@ -6,7 +6,7 @@ import { Button, Form } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { DocumentData, DocumentReference, QuerySnapshot, Timestamp, doc, getDoc, getDocs, onSnapshot, query, where } from 'firebase/firestore';
 import { NewSentenceType } from '../../types/sentence';
-import { deleteQuestion, deleteSentence, getWordlist, questionsCollection, sentencesCollection, updateQuestion, updateSentence, updateWord, wordlistsCollection } from '../util/controller';
+import { addQuestion, addSentence, deleteQuestion, deleteSentence, getWordlist, questionsCollection, sentencesCollection, updateQuestion, updateSentence, updateWord, wordlistsCollection } from '../util/controller';
 import { auth, firestore } from '../../firebase';
 import { NewQuestionType } from '../../types/question';
 import { NewWordType } from '../../types/word';
@@ -64,6 +64,18 @@ const EditWord = () => {
     }
   }
 
+  const part_of_speech = [
+    'noun',
+    'pronoun',
+    'adjective',
+    'determiner',
+    'verb',
+    'adverb',
+    'preposition',
+    'conjunction',
+    'interjection'
+  ]
+
   useEffect(() => {
     setIsLoading(true);
     onSnapshot(wordlistsCollection, (snapshot:
@@ -97,7 +109,7 @@ const EditWord = () => {
           ...docSnap.data(),
         };
         console.log('Wordlists: ', newWordObj.wordlists);
-        localWlist = docSnap.data().wordlists.map(async (ele: DocumentReference) => {
+        localWlist = docSnap.data()?.wordlists === undefined ? [] : docSnap.data().wordlists.map(async (ele: DocumentReference) => {
           const wlist = await getWordlist(ele).then((val: any) => {
             const d = val.data();
             setSelectedWordlists([...wordlists, d])
@@ -186,9 +198,9 @@ const EditWord = () => {
 
   const removeSentence = (idx: number, e: any) => {
     e.preventDefault();
-    console.log('Sentence ID: ', idx);
-    console.log('Sentences: ', sentences);
-    console.log('Sentence: ',sentences[idx]);
+    // console.log('Sentence ID: ', idx);
+    // console.log('Sentences: ', sentences);
+    // console.log('Sentence: ',sentences[idx]);
 
     if (sentences[idx].word_id) {
       const response = confirm(`Are you sure you to delete this sentence: ${sentences[idx].sentence} for word: ${word.word}? \n This action is not reversible.`);
@@ -238,7 +250,7 @@ const EditWord = () => {
       return newSentences;
     });
 
-    console.log('Sentences: ', sentences);
+    // console.log('Sentences: ', sentences);
   };
 
   const changeSentence = (event: any) => {
@@ -263,7 +275,7 @@ const EditWord = () => {
       ...prevQuestions,
       {
         question: '',
-        type: '',
+        type: 'context',
         options: [],
         answer: '',
         word_id: '',
@@ -273,9 +285,9 @@ const EditWord = () => {
 
   const removeQuestion = (idx: number, e: any) => {
     e.preventDefault();
-    console.log('Question ID: ', idx);
-    console.log('Questions: ', questions);
-    console.log('Question: ',questions[idx]);
+    // console.log('Question ID: ', idx);
+    // console.log('Questions: ', questions);
+    // console.log('Question: ',questions[idx]);
 
     if (questions[idx].word_id) {
       const response = confirm(`Are you sure you to delete this question: ${questions[idx].question} for word: ${word.word}? \n This action is not reversible.`);
@@ -331,7 +343,7 @@ const EditWord = () => {
       return newQuestions;
     });
 
-    console.log('Questions: ', questions);
+    // console.log('Questions: ', questions);
   };
 
   const changeQuestion = (event: any) => {
@@ -386,14 +398,12 @@ const EditWord = () => {
       }
     });
 
-    console.log('Form data: ', formData);
-
-    formData['sentences'] = sentences;
-    formData['questions'] = questions;
+    formData['fSentences'] = sentences;
+    formData['fQuestions'] = questions;
 
     // make list of docRefs from selectedWordlists
-    formData['wordlists'] = selectedWordlists.map((docu) => doc(firestore, `wordlists/${docu.id}`));
-    console.log('Form data: ', formData);
+    formData['fWordlists'] = selectedWordlists.map((docu) => doc(firestore, `wordlists/${docu.id}`));
+    // console.log('Form data: ', formData);
     editWord(formData);
   }
 
@@ -412,7 +422,7 @@ const EditWord = () => {
   // connect the below function and call in handleSubmit
   const editWord = (formData: any) => {
     setIsLoading(true);
-    const {sentences, questions, wordlists, ...form} = formData;
+    const {fSentences, fQuestions, fWordlists, ...form} = formData;
 
     updateWord(
       getWord,
@@ -425,7 +435,7 @@ const EditWord = () => {
         synonyms: splitAndClear(form.synonyms) ?? [],
         antonyms: splitAndClear(form.antonyms) ?? [],
         images: splitAndClear(form.images) ?? [],
-        wordlists,
+        wordlists: fWordlists,
         status: form.status,
         created_at: word.created_at,
         updated_at: Timestamp.now(),
@@ -435,20 +445,29 @@ const EditWord = () => {
     })
     .then(() => {
       // use return value of addWord to add sentences
-      sentences.forEach((sentence: any) => {
-        const getSentence = doc(firestore, `sentences/${sentence.id}`);
+      fSentences.forEach((sentence: any) => {
         const lSentence = {...sentence, word_id: wordid};
-        updateSentence(getSentence, {...lSentence});
+        if (sentence.id === undefined) {
+          addSentence(lSentence)
+        } else {
+          const getSentence = doc(firestore, `sentences/${sentence.id}`);
+          updateSentence(getSentence, {...lSentence});
+        }
       })
 
-      questions.forEach((question: any) => {
-        const getQuestion = doc(firestore, `questions/${question.id}`);
+      fQuestions.forEach((question: any) => {
         const lQuestion = {...question,
           options: splitAndClear(question.options) ?? [],
           type: question.type ?? 'context',
           word_id: wordid
         };
-        updateQuestion(getQuestion, lQuestion);
+        console.log("lQuestion: ", lQuestion)
+        if (question.id === undefined) {
+          addQuestion(lQuestion)
+        } else {
+          const getQuestion = doc(firestore, `questions/${question.id}`);
+          updateQuestion(getQuestion, lQuestion);
+        }
       });
 
     }).finally(() => {
@@ -500,10 +519,13 @@ const EditWord = () => {
 
         <Form.Group className='mb-3' controlId='part_of_speech' onChange={handleChange}>
           <Form.Label>Part of Speech</Form.Label>
-          <Form.Control type='text' placeholder='Enter part of speech' pattern='[\u0A00-\u0A76a-zA-Z, ]+' />
-          <Form.Control.Feedback type='invalid'>
-            Please enter part of speech in English.
-          </Form.Control.Feedback>
+          <Form.Select aria-label='Choose part of speech' defaultValue={word.part_of_speech ?? 'noun'}>
+            {part_of_speech.map((ele) => {
+              return (
+                <option key={ele} value={ele}>{ele.charAt(0).toUpperCase() + ele.slice(1)}</option>
+              );
+            })}
+          </Form.Select>
         </Form.Group>
 
         <Form.Group className='mb-3' controlId='synonyms' onChange={handleChange}>
@@ -598,7 +620,7 @@ const EditWord = () => {
                   Please enter question in Gurmukhi.
                 </Form.Control.Feedback>
 
-                Type: <Form.Select aria-label='Default select example' id={`type${idx}`} value={question.type} onChange={(e) => changeQuestion(e)}>
+                Type: <Form.Select aria-label='Default select example' id={`type${idx}`} value={question.type ?? 'context'} onChange={(e) => changeQuestion(e)}>
                   {types.map((ele) => {
                     return (
                       <option key={ele} value={ele}>{ele}</option>
@@ -606,12 +628,12 @@ const EditWord = () => {
                     })}
                 </Form.Select>
 
-                Options: <Form.Control id={`options${idx}`} className='m-1' type='text' placeholder='ਜਵਾਬ1, ਜਵਾਬ2, ...' value={question.options} onChange={(e) => changeQuestion(e)} pattern='.+[\u0A00-\u0A76।,.].[\s,?]*' />
+                Options: <Form.Control id={`options${idx}`} className='m-1' type='text' placeholder='ਜਵਾਬ1, ਜਵਾਬ2, ...' value={question.options} onChange={(e) => changeQuestion(e)} pattern='[\u0A00-\u0A76।,. ]+' />
                 <Form.Control.Feedback type='invalid' itemID={`options${idx}`}>
                   Please enter comma-separated options in Gurmukhi.
                 </Form.Control.Feedback>
 
-                Answer: <Form.Control id={`answer${idx}`} className='m-1' type='text' placeholder='ਜਵਾਬ' value={question.answer} onChange={(e) => changeQuestion(e)} pattern='.+[\u0A00-\u0A76।,.].[\s,?]*' />
+                Answer: <Form.Control id={`answer${idx}`} className='m-1' type='text' placeholder='ਜਵਾਬ' value={question.answer} onChange={(e) => changeQuestion(e)} pattern='[\u0A00-\u0A76।,. ]+' />
                 <Form.Control.Feedback type='invalid' itemID={`answer${idx}`}>
                   Please enter answer in Gurmukhi.
                 </Form.Control.Feedback>

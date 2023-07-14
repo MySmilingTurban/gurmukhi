@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { DocumentData, QuerySnapshot, Timestamp, doc, getDocs, onSnapshot, query, where } from 'firebase/firestore';
-import React, { useEffect, useState } from 'react';
-import { Form, Button } from 'react-bootstrap';
+import { Timestamp } from 'firebase/firestore';
+import React, { useState } from 'react';
+import { Form, Button, Card } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { addNewWordlist} from '../util/controller';
-import { auth, firestore } from '../../firebase';
+import { auth } from '../../firebase';
 
 const AddWordlist = () => {
     const [formValues, setFormValues] = useState({} as any);
@@ -135,13 +135,15 @@ const AddWordlist = () => {
                 Submit
             </Button>
           </Form>
-          {submitted ? <div className="d-flex justify-content-center align-items-center background">
-            <div className="rounded p-4 p-sm-3">
+          {submitted ? <Card className="d-flex justify-content-center align-items-center background">
+            <Card.Body className="rounded p-4 p-sm-3">
               <h3>Successfully added a new wordlist!</h3>
-              <Button variant="primary" onClick={unsetSubmitted}>Add another word</Button>
-              <Button variant="primary" onClick={() => navigate('/home')}>Back to Home</Button>
-            </div>
-          </div> : null}
+              <div className='d-flex justify-content-between align-items-center'>
+                <Button variant="primary" onClick={unsetSubmitted}>Add another word</Button>
+                <Button variant="primary" onClick={() => navigate('/home')}>Back to Home</Button>
+              </div>
+            </Card.Body>
+          </Card> : null}
         </div>
       );
 }

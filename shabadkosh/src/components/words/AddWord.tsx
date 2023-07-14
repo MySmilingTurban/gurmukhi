@@ -23,6 +23,17 @@ const AddWord = () => {
   const [isLoading, setIsLoading] = useState(false);
   const {user} = useUserAuth();
 
+  let newStatus = {
+    'creating-english': 'Creating English',
+    'review-english': 'Review English',
+    'feedback-english': 'Feedback English',
+    'creating-punjabi': 'Creating Punjabi',
+    'feedback-punjabi': 'Feedback Punjabi',
+    'review-final': 'Review Final',
+    'active': 'Active',
+    'inactive': 'Inactive'
+  }
+
   let status = {
     'creating': 'Creation in progress',
     'created': 'Created'
@@ -42,6 +53,18 @@ const AddWord = () => {
       'reviewed': 'Reviewed'
     }
   }
+
+  const part_of_speech = [
+    'noun',
+    'pronoun',
+    'adjective',
+    'determiner',
+    'verb',
+    'adverb',
+    'preposition',
+    'conjunction',
+    'interjection'
+  ]
 
   useEffect(() => {
     setIsLoading(true);
@@ -282,9 +305,10 @@ const AddWord = () => {
       }
     });
 
-    
     formData['sentences'] = sentences;
     formData['questions'] = questions;
+    formData['part_of_speech'] = formData.part_of_speech ?? 'noun'
+    formData['status'] = formData.status ?? 'creating'
     
     // make list of docRefs from selectedWordlists
     formData['wordlists'] = selectedWordlists.map((docu) => doc(firestore, `wordlists/${docu.id}`));
@@ -398,10 +422,13 @@ const AddWord = () => {
 
         <Form.Group className='mb-3' controlId='part_of_speech' onChange={handleChange}>
           <Form.Label>Part of Speech</Form.Label>
-          <Form.Control type='text' placeholder='Enter part of speech' pattern='[\u0A00-\u0A76a-zA-Z, ]+' />
-          <Form.Control.Feedback type='invalid'>
-            Please enter part of speech in English.
-          </Form.Control.Feedback>
+          <Form.Select aria-label='Choose part of speech' defaultValue={'noun'}>
+            {part_of_speech.map((ele) => {
+              return (
+                <option key={ele} value={ele}>{ele.charAt(0).toUpperCase() + ele.slice(1)}</option>
+              );
+            })}
+          </Form.Select>
         </Form.Group>
 
         <Form.Group className='mb-3' controlId='synonyms' onChange={handleChange}>
