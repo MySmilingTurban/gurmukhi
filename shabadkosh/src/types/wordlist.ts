@@ -1,6 +1,6 @@
 import { TimestampType } from './timestamp';
 
-interface Metadata {
+export type Metadata = {
     curriculum?: string,
     level?: string,
     subgroup?: string

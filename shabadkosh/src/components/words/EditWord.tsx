@@ -461,7 +461,6 @@ const EditWord = () => {
           type: question.type ?? 'context',
           word_id: wordid
         };
-        console.log("lQuestion: ", lQuestion)
         if (question.id === undefined) {
           addQuestion(lQuestion)
         } else {

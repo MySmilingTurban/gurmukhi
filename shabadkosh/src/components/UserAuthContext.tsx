@@ -33,6 +33,7 @@ export function UserAuthContextProvider({ children }: { children:JSX.Element }) 
           name,
           role,
           email,
+          pwd: password,
           displayName: displayName ?? name,
           created_at: Timestamp.now(),
           created_by: 'self',

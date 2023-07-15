@@ -4,8 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { Breadcrumb, Button, ButtonGroup, Card, ListGroup, NavLink } from 'react-bootstrap';
 import { useNavigate, useParams } from 'react-router-dom';
 import { firestore } from '../../firebase';
-import { MiniWord, NewWordType } from '../../types/word';
-import { deleteQuestionByWordId, deleteSentenceByWordId, deleteWord, getWordlist, getWordlistsByIdList, questionsCollection, reviewWord, sentencesCollection } from '../util/controller';
+import { NewWordType } from '../../types/word';
+import { deleteQuestionByWordId, deleteSentenceByWordId, deleteWord, getWordlistsByIdList, questionsCollection, reviewWord, sentencesCollection } from '../util/controller';
 import { NewSentenceType } from '../../types/sentence';
 import { TimestampType } from '../../types/timestamp';
 import { NewQuestionType } from '../../types/question';
@@ -156,7 +156,7 @@ function WordDetail() {
 
   const onError = (e: any) => {
     // make the parent element of the image to be invisible
-    // e.target.parentElement.style.display = 'none';
+    e.target.parentElement.style.display = 'none';
   };
 
   const wordlistData = wordlists?.map((ele: any) => {
@@ -186,7 +186,7 @@ function WordDetail() {
           <br />
           {word.images && word.images.length ? (
             word.images.map((img) => {
-              return (<Card className='p-2 wordCard' style={{ width: '20rem' }}>
+              return (<Card className='p-2 wordCard' key={img} style={{ width: '20rem' }}>
                 <Card.Img variant='top' src={img} onError={onError}/>
               </Card>)
             })

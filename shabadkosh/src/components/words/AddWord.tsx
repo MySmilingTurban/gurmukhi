@@ -23,16 +23,16 @@ const AddWord = () => {
   const [isLoading, setIsLoading] = useState(false);
   const {user} = useUserAuth();
 
-  let newStatus = {
-    'creating-english': 'Creating English',
-    'review-english': 'Review English',
-    'feedback-english': 'Feedback English',
-    'creating-punjabi': 'Creating Punjabi',
-    'feedback-punjabi': 'Feedback Punjabi',
-    'review-final': 'Review Final',
-    'active': 'Active',
-    'inactive': 'Inactive'
-  }
+  // let newStatus = {
+  //   'creating-english': 'Creating English',
+  //   'review-english': 'Review English',
+  //   'feedback-english': 'Feedback English',
+  //   'creating-punjabi': 'Creating Punjabi',
+  //   'feedback-punjabi': 'Feedback Punjabi',
+  //   'review-final': 'Review Final',
+  //   'active': 'Active',
+  //   'inactive': 'Inactive'
+  // }
 
   let status = {
     'creating': 'Creation in progress',
