@@ -1,14 +1,18 @@
 // status which creator role can set
 export const cstatus = {
     'creating-english': 'Creating English',
-    'review-english': 'Review English',
-    'creating-punjabi': 'Creating Punjabi',
-    'review-final': 'Review Final'
+    'feedback-english': 'Feedback English',
+    'feedback-punjabi': 'Feedback Punjabi',
+    'creating-punjabi': 'Creating Punjabi'
 }
 
 //status which reviewer role can set
 export const rstatus = {
+    'creating-english': 'Creating English',
+    'review-english': 'Review English',
     'feedback-english': 'Feedback English',
+    'creating-punjabi': 'Creating Punjabi',
+    'review-final': 'Review Final',
     'feedback-punjabi': 'Feedback Punjabi',
     'active': 'Active',
     'inactive': 'Inactive'
@@ -25,14 +29,3 @@ export const astatus = {
     'active': 'Active',
     'inactive': 'Inactive'
 }
-
-// old status tags
-export const ostatus = [
-    'creating',
-    'created',
-    'reviewing',
-    'reviewed',
-    'active',
-    'inactive',
-    'revision'
-]

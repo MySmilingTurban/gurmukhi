@@ -4,14 +4,13 @@ import { ReactNode } from 'react';
 
 export interface NewUserType {
     id?: string,
-    name?: string,
-    username?: string,
+    displayName?: string,
     email?: string,
-    pwd?: string,
     role?: string,
     created_at: TimestampType,
     created_by: string,
     updated_at: TimestampType,
+    updated_by: string,
 }
 
 export interface LocalUser {

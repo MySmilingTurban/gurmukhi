@@ -17,3 +17,8 @@ export interface WordlistType {
     updated_by?: string,
     updated_at?: TimestampType,
 }
+
+export interface MiniWordlist {
+    id?: string,
+    name?: string
+}

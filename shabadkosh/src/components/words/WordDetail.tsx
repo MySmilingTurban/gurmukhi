@@ -1,16 +1,17 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { DocumentReference, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
+import { doc, getDoc, getDocs, query, where } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { Breadcrumb, Button, ButtonGroup, Card, ListGroup, NavLink } from 'react-bootstrap';
 import { useNavigate, useParams } from 'react-router-dom';
 import { firestore } from '../../firebase';
 import { NewWordType } from '../../types/word';
-import { deleteQuestionByWordId, deleteSentenceByWordId, deleteWord, getWordlistsByIdList, questionsCollection, reviewWord, sentencesCollection } from '../util/controller';
+import { deleteQuestionByWordId, deleteSentenceByWordId, deleteWord, getWordlistsByWordId, questionsCollection, removeWordFromWordlists, reviewWord, sentencesCollection } from '../util/controller';
 import { NewSentenceType } from '../../types/sentence';
 import { TimestampType } from '../../types/timestamp';
 import { NewQuestionType } from '../../types/question';
 import { useUserAuth } from '../UserAuthContext';
 import { WordlistType } from '../../types/wordlist';
+import { astatus, rstatus, cstatus } from '../constants';
 
 function WordDetail() {
   const { wordid } = useParams();
@@ -38,6 +39,15 @@ function WordDetail() {
   const [questions, setQuestions] = useState<NewQuestionType[]>([]);
   const [wordlists, setWordlists] = useState<WordlistType[]>([]);
 
+  let statusList = {} as object;
+  if (user.role === 'admin') {
+    statusList = astatus
+  } else if (user.role === 'reviewer') {
+    statusList = rstatus
+  } else if (user.role === 'creator') {
+    statusList = cstatus
+  }
+
   useEffect(() => {
     const fetchWord = async () => {
       setIsLoading(true);
@@ -52,22 +62,16 @@ function WordDetail() {
           ...docSnap.data(),
         };
         let listOfWordlists = [] as WordlistType[];
-        if ('wordlists' in newWordObj) {
-          if (newWordObj.wordlists) {
-            const idListFromDocRefs = (newWordObj.wordlists as DocumentReference[]).map((ele: DocumentReference) => ele.id)
-            const data = await getWordlistsByIdList(idListFromDocRefs).then((data) => {
-              if (data !== undefined) {
-                listOfWordlists = data.map((ele) => {
-                  return {
-                      id: ele.id,
-                      ...ele.data()
-                  } as WordlistType;
-                })
-              }
+        await getWordlistsByWordId(wordid ?? '').then((data) => {
+          if (data !== undefined) {
+            listOfWordlists = data.map((ele) => {
+              return {
+                  id: ele.id,
+                  ...ele.data()
+              } as WordlistType;
             })
-            console.log('loaded data: ', data === undefined)
           }
-        }
+        })
         setWordlists(listOfWordlists);
         setWord(newWordObj)
         setIsLoading(false)
@@ -118,6 +122,7 @@ function WordDetail() {
   }, []);
   
   function convertTimestampToDate(timestamp: TimestampType) {
+    if (!timestamp) return 'Invalid time'
     const timestampDate = new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
     return timestampDate.toLocaleString('en-us', { year:'numeric', month:'short', day:'numeric', hour:'numeric', minute:'numeric', second:'numeric'});
   }
@@ -128,24 +133,44 @@ function WordDetail() {
     if (response) {
       const getWord = doc(firestore, `words/${word.id}`);
       setIsLoading(true)
-      deleteWord(getWord).then(() => {
-        deleteSentenceByWordId(word.id).then(() => {
-          deleteQuestionByWordId(word.id).then(() => {
-            alert('Word deleted!');
-            setIsLoading(false)
-            navigate('/words');
+      removeWordFromWordlists(word.id).then(() => {
+        deleteWord(getWord).then(() => {
+          deleteSentenceByWordId(word.id).then(() => {
+            deleteQuestionByWordId(word.id).then(() => {
+              alert('Word deleted!');
+              setIsLoading(false)
+              navigate('/words');
+            })
           })
         })
-      });
+      })
     } else {
       console.log('Operation abort!');
     }
   }
-  const revWord = (word: NewWordType) => {
+  const revWord = (word: NewWordType, type: string) => {
     const response = confirm(`Are you sure you want to approve this word: ${word.word}?`);
     if (response) {
       const getWord = doc(firestore, `words/${word.id}`);
-      reviewWord(getWord, word).then(() => {
+      let status = 'review-english';
+      if (word.status) {
+        if (type === 'review') {
+          if (['creating-english', 'feedback-english'].includes(word.status)) {
+            status = 'review-english'
+          } else if (['creating-punjabi', 'feedback-punjabi'].includes(word.status)) {
+            status = 'review-final'
+          }
+        } else if (type === 'approve') {
+          if (word.status === 'review-english') {
+            status = 'creating-punjabi'
+          } else if (word.status === 'review-final') {
+            status = 'active'
+          }
+        }
+      } else {
+        status = 'review-english'
+      }
+      reviewWord(getWord, word, status, user.email).then(() => {
         alert('Word approved!');
         navigate('/words');
       });
@@ -174,10 +199,11 @@ function WordDetail() {
       </Breadcrumb>
       <h2>Word Detail</h2>
 
-      <ButtonGroup style={{ display: 'flex' ,width: '150px', alignSelf: 'end'}}>
-        <Button href={editUrl}>Edit</Button>
-        {user?.role == 'admin' ?<Button onClick={() => delWord(word)} variant='danger' hidden={user?.role != 'admin'}>Delete</Button> : null}
-        {(user?.role == 'reviewer' && ['created', 'reviewing', 'reviewed'].includes(word.status ?? 'creating')) ? <Button onClick={() => revWord(word)} variant='success'>Approve</Button> : null}
+      <ButtonGroup style={{ display: 'flex' , alignSelf: 'end'}}>
+        {word.status && Object.keys(statusList).includes(word.status) ? <Button href={editUrl}>Edit</Button> : null}
+        {(word.status && ['reviewer', 'admin'].includes(user.role) && ['creating-english', 'feedback-english', 'creating-punjabi', 'feedback-punjabi'].includes(word.status)) ? <Button onClick={() => revWord(word, 'review')} variant='success'>Send to Review</Button> : null}
+        {(word.status && ['reviewer', 'admin'].includes(user.role) && ['review-english', 'review-final'].includes(word.status)) ? <Button onClick={() => revWord(word, 'approve')} variant='success'>Approve</Button> : null}
+        {user.role == 'admin' ? <Button onClick={() => delWord(word)} variant='danger'>Delete</Button> : null}
       </ButtonGroup>
 
       {/* check if word != {} */}
@@ -191,7 +217,7 @@ function WordDetail() {
               </Card>)
             })
           ): null}
-          <h3>{word.word} ({word.translation})</h3><span className='badge bg-primary' style={{width: '6rem'}}>{word.status}</span>
+          <h3>{word.word} ({word.translation})</h3><span className='badge bg-primary' style={{width: '8rem'}}>{word.status}</span>
           <br />
           <h4><b>ਅਰਥ:</b> {word.meaning_punjabi}</h4>
           <h4><b>Meaning:</b> {word.meaning_english}</h4>
@@ -202,10 +228,12 @@ function WordDetail() {
           <div className='d-flex'>
             {word.synonyms && word.synonyms.length ? (
               word.synonyms.map((synonym, idx) => {
+                // console.log('Synonym: ', (synonym as any).id, (synonym as any).path)
                 return (
                   <Card key={'s' + idx} style={{ width: 'auto', margin: 5 }}>
                     <Card.Body>
-                      <Card.Title>{synonym}</Card.Title>
+                      {/* {synonym ? <a href={`/${(synonym as any).path}`}>go to word</a> : null} */}
+                      <Card.Title>{typeof synonym === 'string' ? synonym : (synonym as any).id}</Card.Title>
                     </Card.Body>
                   </Card>
                 );

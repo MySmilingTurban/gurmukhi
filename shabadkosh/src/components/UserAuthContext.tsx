@@ -9,16 +9,60 @@ import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
   sendEmailVerification,
+  signInWithPopup,
+  GoogleAuthProvider,
 } from 'firebase/auth';
-import { getUser } from './util/users';
+import { checkUser, getUser } from './util/users';
 import { Timestamp, doc, setDoc } from 'firebase/firestore';
 
 const userAuthContext  = createContext<any>(null);
 
 export function UserAuthContextProvider({ children }: { children:JSX.Element }) {
   const [user, setUser] = useState({});
+
   function logIn(email: string, password: string) {
     return signInWithEmailAndPassword(auth, email, password);
+  }
+
+  async function signInWithGoogle() {
+    const provider = new GoogleAuthProvider();
+    return signInWithPopup(auth, provider).then((userCredential) => {
+      const {uid, email, displayName} = userCredential.user
+      return checkUser(uid, email ?? '').then((found) => {
+        if (!found) {
+          const getUser = doc(firestore, `users/${uid}`)
+          setDoc(getUser, {
+            role: 'creator',
+            email,
+            displayName: displayName ?? email?.split('@')[0],
+            created_at: Timestamp.now(),
+            created_by: 'self',
+            updated_at: Timestamp.now(),
+            updated_by: 'self',
+          }).then(() => {
+            console.log('New User added to firestore');
+            return true
+          });
+        } else {
+          console.log('Valid user');
+          return true
+        }
+        setUser(userCredential.user)
+      })
+    })
+    .catch((error) => {
+      if (error.code == 'auth/email-already-in-use') {
+        alert('The email address is already in use');
+      } else if (error.code == 'auth/invalid-email') {
+        alert('The email address is not valid.');
+      } else if (error.code == 'auth/operation-not-allowed') {
+        alert('Operation not allowed.');
+      } else if (error.code == 'auth/weak-password') {
+        alert('The password is too weak.');
+      }
+      console.log(error);
+      return false;
+    });
   }
 
   async function signUp(name: string, role: string, email: string, password: string) {
@@ -29,18 +73,17 @@ export function UserAuthContextProvider({ children }: { children:JSX.Element }) 
         const { uid, email, displayName } = user;
         const getUser = doc(firestore, `users/${uid}`);
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const setNewUser = setDoc(getUser, {
+        await setDoc(getUser, {
           name,
           role,
           email,
-          pwd: password,
           displayName: displayName ?? name,
           created_at: Timestamp.now(),
           created_by: 'self',
-          updated_at: Timestamp.now()
-        }).then((usr) => {
+          updated_at: Timestamp.now(),
+          updated_by: 'self'
+        }).then(() => {
           console.log('New User added to firestore');
-          console.log('User: ', usr);
         });
         setUser(user);
         
@@ -66,6 +109,7 @@ export function UserAuthContextProvider({ children }: { children:JSX.Element }) 
         return false;
       });
   }
+
   function logOut() {
     return signOut(auth);
   }
@@ -81,17 +125,14 @@ export function UserAuthContextProvider({ children }: { children:JSX.Element }) 
         const userData = getUser(email ?? '', uid)
           .then((data) => 
             {
-              // if (!data) console.log('Invalid user');
-              // else console.log('Valid user');
               const usr = {
                 user,
                 uid,
                 email: data?.email,
-                displayName: data?.name,
+                displayName: data?.displayName,
                 photoURL: '',
                 role: data?.role,
               };
-              // console.log('usr: ', usr);
               setUser(usr);
           })
       }
@@ -104,7 +145,7 @@ export function UserAuthContextProvider({ children }: { children:JSX.Element }) 
   }, []);
 
   return (
-    <userAuthContext.Provider value={{ user, logIn, signUp, logOut }}>
+    <userAuthContext.Provider value={{ user, logIn, signUp, logOut, signInWithGoogle }}>
       {children}
     </userAuthContext.Provider>
   );

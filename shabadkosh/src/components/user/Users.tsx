@@ -25,6 +25,7 @@ function Users() {
                 created_at: doc.data().created_at,
                 updated_at: doc.data().updated_at,
                 created_by: doc.data().created_by,
+                updated_by: doc.data().updated_by,
                 ...doc.data(),
             };
             })
@@ -42,13 +43,17 @@ function Users() {
     (p1, p2) => (p1.updated_at < p2.updated_at) ? 1 : (p1.updated_at > p2.updated_at) ? -1 : 0);
   // console.log("Sorted words: ", sortedWords);
 
-  const delUser = (user: any) => {
-    const response = confirm(`Are you sure you to delete this user: ${user.name}? \n This action is not reversible.`);
+  const delUser = (lUser: any) => {
+    if (lUser.email === user.email && lUser.id === user.uid) {
+      alert('Self-destruct is not allowed!')
+      return
+    }
+    const response = confirm(`Are you sure you to delete this user: ${lUser.displayName}? \n This action is not reversible.`);
     if (response) {
-      const getWord = doc(firestore, `users/${user.id}`);
+      const getWord = doc(firestore, `users/${lUser.id}`);
       deleteWord(getWord).then(() => {
         alert('User deleted!');
-        console.log(`Deleted user with id: ${user.id}!`);
+        console.log(`Deleted user with id: ${lUser.id}!`);
       });
     } else {
       console.log('Operation abort!');
@@ -62,7 +67,7 @@ function Users() {
           key={cuser.id}
           className="d-flex justify-content-between align-items-start">
           <div className="ms-2 me-auto">
-            <h5 className="fw-bold">{cuser.name}</h5>
+            <h5 className="fw-bold">{cuser.displayName}</h5>
             <p>Email: {cuser.email}</p>
             <p>Role: {cuser.role}</p>
           </div>

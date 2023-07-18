@@ -1,12 +1,13 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from 'react';
 import { Card, Button, Container, Row, Badge, ListGroup, ButtonGroup, Form } from 'react-bootstrap';
-import { deleteWord, wordsCollection } from '../util/controller';
+import { deleteQuestionByWordId, deleteSentenceByWordId, deleteWord, removeWordFromWordlists, wordsCollection } from '../util/controller';
 import { DocumentData, QuerySnapshot, doc, onSnapshot } from 'firebase/firestore';
-import { NewWordType } from '../../types/word';
+import { NewWordType, Status } from '../../types/word';
 import { firestore } from '../../firebase';
 import { useUserAuth } from '../UserAuthContext';
-import { ostatus } from '../constants';
+import { astatus, cstatus, rstatus } from '../constants';
+import { useNavigate } from 'react-router-dom';
 
 function ViewDictionary() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -17,6 +18,16 @@ function ViewDictionary() {
   const [words, setWords] = useState<NewWordType[]>([]);
   const [filteredWords, setFilteredWords] = useState<NewWordType[]>([]);
   const {user} = useUserAuth();
+  const navigate = useNavigate();
+
+  let statusList = {} as Status;
+  if (user.role === 'admin') {
+    statusList = astatus
+  } else if (user.role === 'reviewer') {
+    statusList = rstatus
+  } else if (user.role === 'creator') {
+    statusList = cstatus
+  }
 
   const handleSearch = async (event: any) => {
     event.preventDefault();
@@ -57,33 +68,40 @@ function ViewDictionary() {
     setIsLoading(false);
   }, []);
 
-  // console.log('Words', words);
   const sortWords = (unwords: NewWordType[]) => {
-    let sortedWords = unwords.sort(
+    const sortedWords = unwords.sort(
       (p1, p2) => (p1.updated_at < p2.updated_at) ? 1 : (p1.updated_at > p2.updated_at) ? -1 : 0);
 
     // filter words by user role
-    if (user?.role === 'creator') {
-      sortedWords = sortedWords.filter((word) => ['creating', 'created'].includes(word.status ?? ''));
-    } else if (user?.role === 'reviewer') {
-      sortedWords = sortedWords.filter((word) => ['reviewing', 'created'].includes(word.status ?? ''));
-    } else if (user?.role === 'admin') {
-      // no change, admin can view all
-    } else {
-      sortedWords = sortedWords.filter((word) => ['...'].includes(word.status ?? ''));
-    }
+    // if (user?.role === 'creator') {
+    //   sortedWords = sortedWords.filter((word) => ['creating-english', 'creating-punjabi', 'creating', 'feedback-english', 'feedback-punjabi'].includes(word.status ?? ''));
+    // } else if (user?.role === 'reviewer') {
+    //   sortedWords = sortedWords.filter((word) => ['reviewing', 'created'].includes(word.status ?? ''));
+    // } else if (user?.role === 'admin') {
+    //   // no change, admin can view all
+    // } else {
+    //   sortedWords = sortedWords.filter((word) => ['...'].includes(word.status ?? ''));
+    // }
     return sortedWords;
   }
   // console.log('Sorted words: ', sortedWords);
 
   const delWord = (word: any) => {
+    // add code to remove word_id from its respective wordlist
     const response = confirm(`Are you sure you want to delete this word: ${word.word}? \n This action is not reversible.`);
     if (response) {
       const getWord = doc(firestore, `words/${word.id}`);
-      deleteWord(getWord).then(() => {
-        alert('Word deleted!');
-        console.log(`Deleted word with id: ${word.id}!`);
-      });
+      removeWordFromWordlists(word.id).then(() => {
+        deleteWord(getWord).then(() => {
+          deleteSentenceByWordId(word.id).then(() => {
+            deleteQuestionByWordId(word.id).then(() => {
+              alert('Word deleted!');
+              setIsLoading(false)
+              navigate('/words');
+            })
+          })
+        })
+      })
     } else {
       console.log('Operation abort!');
     }
@@ -110,6 +128,7 @@ function ViewDictionary() {
     sortWords(filteredWords)?.map((word) => {
       const detailUrl = `/words/${word.id}`;
       const editUrl = `/words/edit/${word.id}`;
+      console.log('status: ', word.status, '\n is: ', Object.keys(statusList).includes(word.status ?? 'creating-english'))
       if (listView) {
         return (
           <ListGroup.Item
@@ -124,7 +143,7 @@ function ViewDictionary() {
             <div className='d-flex flex-column align-items-end'>
               <ButtonGroup>
                 <Button href={detailUrl} style={{backgroundColor: 'transparent', border: 'transparent'}}>👁️</Button>
-                <Button href={editUrl} style={{backgroundColor: 'transparent', border: 'transparent'}}>🖊️</Button>
+                <Button href={editUrl} hidden={Object.keys(statusList).includes(word.status ?? 'creating-english')} style={{backgroundColor: 'transparent', border: 'transparent'}}>🖊️</Button>
                 <Button onClick={() => delWord(word)} style={{backgroundColor: 'transparent', border: 'transparent'}} hidden={user?.role != 'admin'}>🗑️</Button>
               </ButtonGroup>
               <Badge pill bg='primary' text='white' hidden={!word.status}>
@@ -137,8 +156,10 @@ function ViewDictionary() {
         return  (
           <Card className='p-2 wordCard' key={word.id} style={{ width: '20rem' }}>
             {/* <Card.Img variant='top' src={word.images && word.images.length ? word.images[0] : require('../../assets/nothing.jpeg')} onError={onError} /> */}
-            <Card.Body className='d-flex flex-column justify-content-center'>
-              <div className='d-flex flex-row justify-content-between align-items-center'>
+            <Card.Body className='d-flex flex-column justify-content-center'
+              style={{width: '100%'}}>
+              <div className='d-flex flex-row justify-content-between align-items-center'
+                style={{width: '100%'}}>
                 <Card.Title>{word.word}<br/>({word.translation})</Card.Title>
                 <Badge pill bg='primary' text='white' hidden={!word.status} style={{ alignSelf: 'flex-start' }}>
                   {word.status}
@@ -146,7 +167,7 @@ function ViewDictionary() {
               </div>
               <ButtonGroup>
                 <Button href={detailUrl} variant='success'>View</Button>
-                <Button href={editUrl}>Edit</Button>
+                {Object.keys(statusList).includes(word.status ?? 'creating-english') ? <Button href={editUrl}>Edit</Button> : null }
                 {user?.role === 'admin' ? <Button onClick={() => delWord(word)} variant='danger' >Delete</Button> : null }
               </ButtonGroup>
             </Card.Body>
@@ -191,9 +212,10 @@ function ViewDictionary() {
             <Form.Label>Status</Form.Label>
             <Form.Select defaultValue={status}>
               <option key={'all'} value={''}>Show All</option>
-              {ostatus.map((ele) => {
+              {Object.keys(statusList).length > 0 && Object.keys(statusList).map((ele) => {
+                const val = statusList[ele]
                 return (
-                  <option key={ele} value={ele}>{ele.charAt(0).toUpperCase() + ele.slice(1)}</option>
+                  <option key={ele} value={ele}>{val.charAt(0).toUpperCase() + val.slice(1)}</option>
                   );
               })}
             </Form.Select>

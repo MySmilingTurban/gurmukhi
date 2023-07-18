@@ -7,7 +7,9 @@ import {
   signOut,
   signInWithEmailAndPassword,
   NextOrObserver,
-  User
+  User,
+  sendPasswordResetEmail,
+  confirmPasswordReset
 } from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
 
@@ -37,6 +39,16 @@ export const userStateListener = (callback:NextOrObserver<User>) => {
 }
 
 export const SignOutUser = async () => await signOut(auth);
+
+export const passwordReset = async (email: string) => {
+  return await sendPasswordResetEmail(auth, email)
+}
+
+export const confirmResetPassword = async (oobCode: string, newPassword: string) => {
+  if (!oobCode && !newPassword) return;
+
+  return await confirmPasswordReset(auth, oobCode, newPassword)
+}
 
 export const firestore = getFirestore(app);
 export const analytics = getAnalytics(app);

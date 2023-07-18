@@ -1,10 +1,11 @@
 
-import { onSnapshot, QuerySnapshot, DocumentData } from 'firebase/firestore';
+import { onSnapshot, QuerySnapshot, DocumentData, doc } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react'
 import { useUserAuth } from '../UserAuthContext';
-import { wordlistsCollection } from '../util/controller';
+import { deleteWordlist, wordlistsCollection } from '../util/controller';
 import { Badge, Button, ButtonGroup, ListGroup } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
+import { firestore } from '../../firebase';
 
 function Wordlists() {
     const [ isLoading, setIsLoading ] = useState<boolean>(true);
@@ -37,6 +38,21 @@ function Wordlists() {
         return sortedWordlists;
     };
 
+    const delWordlist = (wordlist: any) => {
+      const response = confirm(`Are you sure you want to delete this wordlist: ${wordlist.name}? \n This action is not reversible.`);
+      if (response) {
+        const getWordlist = doc(firestore, `wordlists/${wordlist.id}`);
+        deleteWordlist(getWordlist).then(() => {
+          alert('Word deleted!');
+          console.log(`Deleted word with id: ${wordlist.id}!`);
+        }).catch((error) => {
+          console.log(error);
+        });
+      } else {
+        console.log('Operation abort!');
+      }
+    }
+
     const wordlistsData = sortWordlists(wordlists)?.map((wordlist) => {
         const viewUrl = `/wordlists/${wordlist.id}`;
         const editUrl = `/wordlists/edit/${wordlist.id}`;
@@ -58,6 +74,7 @@ function Wordlists() {
                 <ButtonGroup>
                   <Button href={viewUrl} style={{backgroundColor: 'transparent', border: 'transparent'}}>👁️</Button>
                   <Button href={editUrl} style={{backgroundColor: 'transparent', border: 'transparent'}}>🖊️</Button>
+                  <Button onClick={() => delWordlist(wordlist)} style={{backgroundColor: 'transparent', border: 'transparent'}} hidden={user?.role != 'admin'}>🗑️</Button>
                 </ButtonGroup>
                 <Badge pill bg="primary" text="white" hidden={!wordlist.status}>
                   {wordlist.status}

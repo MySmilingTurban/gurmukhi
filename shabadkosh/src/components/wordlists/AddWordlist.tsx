@@ -1,16 +1,46 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Timestamp } from 'firebase/firestore';
-import React, { useState } from 'react';
+import { DocumentData, QuerySnapshot, Timestamp, onSnapshot } from 'firebase/firestore';
+import React, { useEffect, useState } from 'react';
 import { Form, Button, Card } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import { addNewWordlist} from '../util/controller';
+import { addNewWordlist, wordsCollection} from '../util/controller';
 import { auth } from '../../firebase';
+import { MiniWord, NewWordType } from '../../types/word';
+import { useUserAuth } from '../UserAuthContext';
+import Multiselect from 'multiselect-react-dropdown';
 
 const AddWordlist = () => {
     const [formValues, setFormValues] = useState({} as any);
     const [validated, setValidated] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [words, setWords] = useState<MiniWord[]>([])
+    const [selectedWords, setSelectedWords] = useState<MiniWord[]>([])
+
+    useEffect(() => {
+      setIsLoading(true)
+      onSnapshot(wordsCollection, (snapshot: QuerySnapshot<DocumentData>) => {
+        console.log('snapshot', snapshot)
+        setWords(snapshot.docs.map((doc) => {
+          return {
+              id: doc.id,
+              word: doc.data().word,
+          }
+        }))
+      })
+
+      setIsLoading(false);
+    }, []);
+
+    const onSelect = (selectedList: [], selectedItem: any) => {
+      // console.log("Selected list: ", selectedList, ", selected item: ", selectedItem);
+      setSelectedWords(selectedList);
+    }
+
+    const onRemove = (selectedList: [], removedItem: any) => {
+      // console.log("Selected list: ", selectedList, ", removed item: ", removedItem);
+      setSelectedWords(selectedList);
+    }
 
     const resetState = () => {
         setValidated(false);
@@ -35,6 +65,7 @@ const AddWordlist = () => {
         // console.log("Validated!");
         const formData = {
           ...formValues,
+          words: selectedWords.map((ele) => ele.id)
         }
         console.log('Form data: ', formData);
 
@@ -52,6 +83,7 @@ const AddWordlist = () => {
             level: formData.level ?? '',
             subgroup: formData.subgroup ?? ''
           },
+          words: formData.words ?? [],
           created_at: Timestamp.now(),
           created_by: auth.currentUser?.email,
           updated_at: Timestamp.now(),
@@ -89,6 +121,17 @@ const AddWordlist = () => {
               <Form.Control.Feedback type="invalid">
                 Please enter a name for this wordlist.
               </Form.Control.Feedback>
+            </Form.Group>
+
+            <Form.Group className="mb-3" controlId="words" >
+              <Form.Label>Words</Form.Label>
+              <Multiselect 
+                options={words}
+                displayValue="word"
+                showCheckbox={true}
+                onSelect={onSelect}
+                onRemove={onRemove}
+              />
             </Form.Group>
 
             <Form.Group className="mb-3" controlId="curriculum" onChange={handleChange}>
@@ -139,8 +182,8 @@ const AddWordlist = () => {
             <Card.Body className="rounded p-4 p-sm-3">
               <h3>Successfully added a new wordlist!</h3>
               <div className='d-flex justify-content-between align-items-center'>
-                <Button variant="primary" onClick={unsetSubmitted}>Add another word</Button>
-                <Button variant="primary" onClick={() => navigate('/home')}>Back to Home</Button>
+                <Button variant="primary" onClick={unsetSubmitted}>Add another wordlist</Button>
+                <Button variant="primary" onClick={() => navigate('/wordlists')}>View Wordlists</Button>
               </div>
             </Card.Body>
           </Card> : null}

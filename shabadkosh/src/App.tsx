@@ -6,6 +6,7 @@ import { Route, Routes } from 'react-router-dom';
 import Login from './components/auth/Login';
 import Logout from './components/auth/Logout';
 import Signup from './components/auth/Signup';
+import ForgotPassword from './components/auth/ForgotPassword';
 import About from './components/About';
 import Contact from './components/Contact';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -34,6 +35,7 @@ function App() {
 
           {/* auth */}
           <Route path="/login" element={<Login />}/>
+          <Route path="/forgot-password" element={<ForgotPassword />}/>
           <Route path="/logout" element={<Logout />}/>
           <Route path="/signup" element={<Signup />}/>
 

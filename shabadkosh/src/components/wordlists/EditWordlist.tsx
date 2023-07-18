@@ -1,10 +1,10 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { DocumentData, QuerySnapshot, Timestamp, doc, getDoc, getDocs, onSnapshot, query, where } from 'firebase/firestore';
+import { DocumentData, QuerySnapshot, Timestamp, doc, getDoc, onSnapshot } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { Form, Button, Card } from 'react-bootstrap';
 import { useNavigate, useParams } from 'react-router-dom';
 import { auth, firestore } from '../../firebase';
-import { wordsCollection, updateWordlist, setWordlistInWords } from '../util/controller';
+import { wordsCollection, updateWordlist } from '../util/controller';
 import { Multiselect } from 'multiselect-react-dropdown';
 import { MiniWord } from '../../types/word';
 
@@ -15,14 +15,14 @@ const EditWordlist = () => {
     const [formValues, setFormValues] = useState({} as any);
     const [validated, setValidated] = useState(false);
     const [submitted, setSubmitted] = useState(false);
-    const [found, setFound] = useState(true);
-    const [isLoading, setIsLoading] = useState(true);
+    const [found, setFound] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const [wordlist, setWordlist] = useState<any>({});
     const [words, setWords] = useState<MiniWord[]>([]);
     const [selectedWords, setSelectedWords] = useState<MiniWord[]>([]);
-    const [removedWords, setRemovedWords] = useState<MiniWord[]>([]);
 
     useEffect(() => {
+      let localWlist = [] as MiniWord[]
       const fetchWords = async () => {
         setIsLoading(true);
         onSnapshot(wordsCollection, (snapshot:
@@ -33,29 +33,13 @@ const EditWordlist = () => {
                 word: doc.data().word,
             } as MiniWord;
           })
+          localWlist = allWords;
           setWords(allWords);
         });
 
         setIsLoading(false);
       }
-      const fetchWlists = async () => {
-        setIsLoading(true);
-        const q = query(wordsCollection, where('wordlists', 'array-contains', getWordlist));
-        const querySnapshot = await getDocs(q);
-        if (!querySnapshot.empty) {
-            const listOfWords = querySnapshot.docs.map((doc) => {
-                return {
-                    id: doc.id,
-                    word: doc.data().word
-                } as MiniWord;
-            });
-            console.log('List of words: ', listOfWords)
-            setSelectedWords(listOfWords);
-            setIsLoading(false);
-        } else {
-        console.log('No related words!');
-        }
-      }
+
       const fetchWordlist = async () => {
           setIsLoading(true);
           const docSnap = await getDoc(getWordlist);
@@ -66,10 +50,17 @@ const EditWordlist = () => {
                 created_by: docSnap.data().created_by,
                 updated_at: docSnap.data().updated_at,
                 updated_by: docSnap.data().updated_by,
+                words: docSnap.data().words ?? [],
                 ...docSnap.data(),
             } as any;
+            const wlist = newWordObj.words.map((ele: string) => 
+              localWlist.filter((val: MiniWord) => val.id === ele)[0])
+              .filter((ele: any) => ele != undefined)
+
+            newWordObj['words'] = wlist;
             setFound(true);
             setWordlist(newWordObj);
+            setSelectedWords(wlist);
             fillFormValues(newWordObj);
             setIsLoading(false);
           } else {
@@ -79,7 +70,6 @@ const EditWordlist = () => {
           }
       };
       fetchWords();
-      fetchWlists();
       fetchWordlist();
     }, []);
 
@@ -102,20 +92,12 @@ const EditWordlist = () => {
 
     const onSelect = (selectedList: [], selectedItem: any) => {
       console.log('Selected list: ', selectedList, ', selected item: ', selectedItem);
-      if (removedWords.includes(selectedItem)) {
-        const updatedRem = removedWords.filter((ele) => ele != selectedItem)
-        console.log('Removed list: ', updatedRem);
-        setRemovedWords(updatedRem)
-      }
       setSelectedWords(selectedList);
     }
 
     const onRemove = (selectedList: [], removedItem: any) => {
       console.log('Selected list: ', selectedList, ', removed item: ', removedItem);
       setSelectedWords(selectedList);
-      const newRem = [...removedWords, removedItem]
-      console.log('new rem: ', newRem);
-      setRemovedWords(newRem);
     }
 
     const handleSubmit = (e: any) => {
@@ -135,6 +117,7 @@ const EditWordlist = () => {
           id: formValues.id,
           name: formValues.name,
           status: formValues.status,
+          words: selectedWords.map((ele) => ele.id),
           metadata: {
             curriculum: formValues.curriculum ?? formValues.metadata.curriculum,
             level: formValues.level ?? formValues.metadata.level,
@@ -148,10 +131,8 @@ const EditWordlist = () => {
         }
 
         console.log('Selected words: ', selectedWords);
-        console.log('Removed words: ', removedWords);
         console.log('Form data: ', formData);
 
-        setWordlistInWords(selectedWords, removedWords, getWordlist).then((data) => {console.log('set wordlist in words: ', data)})
         editWordlist(formData)
     }
 

@@ -5,25 +5,49 @@ import { Form, Alert, Card } from 'react-bootstrap';
 import { Button } from 'react-bootstrap';
 import { useUserAuth } from '../UserAuthContext';
 import { checkUser } from '../util/users';
+import { UserCredential } from 'firebase/auth';
+import GoogleButton from 'react-google-button';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { logIn } = useUserAuth();
+  const { logIn, signInWithGoogle } = useUserAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
     setError('');
     try {
-      const valid = await checkUser(email, password);
-      if (!valid) throw new Error('Invalid user');
-      else console.log('Valid user');
-      await logIn(email, password);
+      await logIn(email, password).then((data: UserCredential) => {
+        const {uid, email} = data.user
+        if (email) {
+          checkUser(uid, email).then((found) => {
+            if (!found) {
+              throw new Error('Invalid user');
+            } else {
+              console.log('Valid user');
+            }
+          })
+        }
+      })
       navigate('/home');
     } catch (err: any) {
       setError(err.message);
+    }
+  };
+
+  const handleGoogleSignIn = async (e: any) => {
+    e.preventDefault();
+    try {
+      // left with getting confirmation of logging to navigate to homepage
+      await signInWithGoogle().then((success: any) => {
+        if (success) {
+          navigate('/home')
+        }
+      })
+    } catch (error: any) {
+      console.log(error.message);
     }
   };
 
@@ -56,17 +80,20 @@ const Login = () => {
           </div>
         </Form>
         <hr style={{width: '100%'}}/>
-        {/* <div>
+        <div>
           <GoogleButton
             className="g-btn"
             type="dark"
             onClick={handleGoogleSignIn}
           />
-        </div> */}
+        </div>
         <Card className="p-4 box mt-3 text-center" style={{width: '50%'}}>
           Contact the admin to get reviewer/admin access.<br/>
           Do not have an account?
-          <Link to="/signup">Sign up</Link>
+          <a href="/signup">Sign up</a>
+
+          <br />
+          <Link to="/forgot-password">Forgot password!</Link>
         </Card>
       </div>
     </div>

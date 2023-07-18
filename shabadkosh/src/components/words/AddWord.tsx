@@ -2,13 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { Button, Card, Form } from 'react-bootstrap';
 import { NewSentenceType } from '../../types/sentence';
 import { useNavigate } from 'react-router-dom';
-import { addQuestion, addSentence, addWord, wordlistsCollection } from '../util/controller';
-import { DocumentData, DocumentReference, QuerySnapshot, Timestamp, doc, onSnapshot } from 'firebase/firestore';
-import { auth, firestore } from '../../firebase';
+import { addQuestion, addSentence, addWord, addWordIdToWordlists, wordlistsCollection } from '../util/controller';
+import { DocumentData, DocumentReference, QuerySnapshot, Timestamp, onSnapshot } from 'firebase/firestore';
+import { auth } from '../../firebase';
 import { NewQuestionType } from '../../types/question';
 import { useUserAuth } from '../UserAuthContext';
 import { WordlistType } from '../../types/wordlist';
 import Multiselect from 'multiselect-react-dropdown';
+import { astatus, cstatus, rstatus } from '../constants';
 
 const types = ['context', 'image', 'meaning', 'definition'];
 
@@ -23,35 +24,13 @@ const AddWord = () => {
   const [isLoading, setIsLoading] = useState(false);
   const {user} = useUserAuth();
 
-  // let newStatus = {
-  //   'creating-english': 'Creating English',
-  //   'review-english': 'Review English',
-  //   'feedback-english': 'Feedback English',
-  //   'creating-punjabi': 'Creating Punjabi',
-  //   'feedback-punjabi': 'Feedback Punjabi',
-  //   'review-final': 'Review Final',
-  //   'active': 'Active',
-  //   'inactive': 'Inactive'
-  // }
-
-  let status = {
-    'creating': 'Creation in progress',
-    'created': 'Created'
-  } as object;
-  if (user.role == 'admin') {
-    status = {
-      ...status,
-      'reviewing': 'Review in progress',
-      'reviewed': 'Reviewed',
-      'active': 'Active',
-      'inactive': 'Inactive'
-    }
-  } else if (user.role == 'reviewer') {
-    status = {
-      ...status,
-      'reviewing': 'Review in progress',
-      'reviewed': 'Reviewed'
-    }
+  let status = {} as object;
+  if (user.role === 'admin') {
+    status = astatus
+  } else if (user.role === 'reviewer') {
+    status = rstatus
+  } else if (user.role === 'creator') {
+    status = cstatus
   }
 
   const part_of_speech = [
@@ -277,10 +256,46 @@ const AddWord = () => {
     setValidated(false);
   }
 
-
   const handleChange = (e: any) => {
     setFormValues({ ...formValues, [e.target.id]: e.target.value });
   }
+
+  const sendForReview = (e: any) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    const form = e.target.form;
+    if (form.checkValidity() === false) {
+      setValidated(true);
+      return;
+    }
+
+    console.log('Validated!');
+
+    const formData = {} as any;
+    Object.keys(formValues).map((ele) => {
+      if (!ele.match(/sentence\d+/) && !ele.match(/translation\d+/) && !ele.match(/question\d+/) && !ele.match(/type\d+/) && !ele.match(/options\d+/) && !ele.match(/answer\d+/)) {
+        formData[ele] = formValues[ele];
+      }
+    });
+
+    formData['sentences'] = sentences;
+    formData['questions'] = questions;
+    formData['part_of_speech'] = formData.part_of_speech ?? 'noun'
+    formData['status'] = formData.status ?? 'review-english'
+    
+    // make list of docRefs from selectedWordlists
+    formData['wordlists'] = selectedWordlists.map((docu) => docu.id);
+    // console.log('Form data: ', formData);
+    addNewWord(formData);
+
+    
+    if (e.target.form.status.value === 'creating-english') {
+      e.target.form.status.value = 'review-english'
+    }
+    console.log('Form data: ', formValues)
+  }
+
 
   const handleSubmit = (e: any) => {
     e.preventDefault();
@@ -308,11 +323,11 @@ const AddWord = () => {
     formData['sentences'] = sentences;
     formData['questions'] = questions;
     formData['part_of_speech'] = formData.part_of_speech ?? 'noun'
-    formData['status'] = formData.status ?? 'creating'
+    formData['status'] = formData.status ?? 'creating-english'
     
     // make list of docRefs from selectedWordlists
-    formData['wordlists'] = selectedWordlists.map((docu) => doc(firestore, `wordlists/${docu.id}`));
-    console.log('Form data: ', formData);
+    formData['wordlists'] = selectedWordlists.map((docu) => docu.id);
+    // console.log('Form data: ', formData);
     addNewWord(formData);
   }
 
@@ -338,8 +353,7 @@ const AddWord = () => {
       synonyms: splitAndClear(form.synonyms) ?? [],
       antonyms: splitAndClear(form.antonyms) ?? [],
       images: splitAndClear(form.images) ?? [],
-      wordlists,
-      status: form.status ?? 'creating',
+      status: form.status ?? 'creating-english',
       created_at: Timestamp.now(),
       updated_at: Timestamp.now(),
       created_by: auth.currentUser?.email,
@@ -367,6 +381,8 @@ const AddWord = () => {
           word_id
         })
       });
+
+      addWordIdToWordlists(wordlists, word_id)
 
     }).finally(() => {
       setIsLoading(false);
@@ -449,7 +465,7 @@ const AddWord = () => {
 
         <Form.Group className='mb-3' controlId='status' onChange={handleChange}>
           <Form.Label>Status</Form.Label>
-          <Form.Select aria-label='Default select example'>
+          <Form.Select aria-label='Default select example' defaultValue={'creating-english'}>
             {Object.entries(status).map((ele) => {
               const [key, value] = ele;
               return (
@@ -551,9 +567,12 @@ const AddWord = () => {
           <Form.Control as='textarea' rows={3} placeholder='Enter notes' />
         </Form.Group>
 
-          <Button variant='primary' type='submit'>
-            Submit
-          </Button>
+        <Button variant='primary' type='submit'>
+          Submit
+        </Button>
+        <Button variant='primary' type='button' onClick={(e) => sendForReview(e)}>
+          Send for review
+        </Button>
       </Form>
       {submitted ? <Card className='d-flex justify-content-center align-items-center background'>
         <Card.Body className='rounded p-4 p-sm-3'>

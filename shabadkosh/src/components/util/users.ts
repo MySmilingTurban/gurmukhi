@@ -1,13 +1,13 @@
-import { DocumentReference, collection, doc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore'
+import { DocumentReference, collection, doc, documentId, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore'
 import db from './controller'
 
 export const usersCollection = collection(db, 'users');
-export const checkUser = async (email: string, pwd: string) => {
-    const q = query(usersCollection, where('email', '==', email), where('pwd', '==', pwd));
+export const checkUser = async (uid: string, email: string) => {
+    // const userRef = doc(firestore, 'users', uid)
+    // const userSnap = await getDoc(userRef);
+    const q = query(usersCollection, where(documentId(), '==', uid), where('email', '==', email));
     const usersSnapshot = await getDocs(q);
     if (!usersSnapshot.empty) {
-        const user = usersSnapshot.docs[0];
-        localStorage.setItem('user', JSON.stringify(user.data()));
         return true;
     }
     return false;

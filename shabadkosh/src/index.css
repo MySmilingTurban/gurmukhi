@@ -24,7 +24,6 @@ code {
 }
 
 .wordCard {
-  /* add sick abstract neumorphism on white bg design background and shadows */
   background-color: #fff;
   border-radius: 10px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -36,12 +35,10 @@ code {
   align-items: center;
 }
 
-/* hover neumorphic effect */
 .wordCard:hover {
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
 }
 
-/* add design for text, image and button to match the design */
 .wordCard .word {
   font-size: 2rem;
   font-weight: 700;

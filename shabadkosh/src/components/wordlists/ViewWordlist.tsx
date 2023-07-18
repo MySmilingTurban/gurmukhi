@@ -3,8 +3,8 @@ import React, { useEffect, useState } from 'react'
 import { Card, Breadcrumb, ButtonGroup, Button, NavLink } from 'react-bootstrap';
 import { useNavigate, useParams } from 'react-router-dom';
 import { MiniWord } from '../../types/word';
-import { getDoc, doc, getDocs, query, where } from 'firebase/firestore';
-import { deleteWordlist, removeWordlistConn, wordsCollection } from '../util/controller';
+import { getDoc, doc } from 'firebase/firestore';
+import { deleteWordlist, getWordsByIdList } from '../util/controller';
 import { firestore } from '../../firebase';
 import { TimestampType } from '../../types/timestamp';
 import { useUserAuth } from '../UserAuthContext';
@@ -13,34 +13,12 @@ function ViewWordlist() {
     const {wlid} = useParams();
     const {user} = useUserAuth();
     const navigate = useNavigate();
-    const getWordlist = doc(firestore, `/wordlists/${wlid}`);
+    const getWordlist = doc(firestore, `wordlists/${wlid}`);
 
     const [wordlist, setWordlist] = useState<any>({});
     const [found, setFound] = useState<boolean>(true);
     const [words, setWords] = useState<MiniWord[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(false);
-
-    useEffect(() => {
-        const fetchWlists = async () => {
-            setIsLoading(true);
-            const q = query(wordsCollection, where('wordlists', 'array-contains', getWordlist));
-            const querySnapshot = await getDocs(q);
-            if (!querySnapshot.empty) {
-                const listOfWords = querySnapshot.docs.map((doc) => {
-                    return {
-                        id: doc.id,
-                        word: doc.data().word
-                    } as MiniWord;
-                });
-                console.log('List of words: ', listOfWords)
-                setWords(listOfWords);
-                setIsLoading(false);
-            } else {
-            console.log('No sentences!');
-            }
-        }
-        fetchWlists()
-    }, [])
 
     useEffect(() => {
         const fetchWordlist = async () => {
@@ -52,17 +30,18 @@ function ViewWordlist() {
                     created_at: docSnap.data().created_at,
                     updated_at: docSnap.data().updated_at,
                     created_by: docSnap.data().created_by,
+                    words: docSnap.data().words ?? [],
                     ...docSnap.data(),
                 };
                 setWordlist(newWordObj);
-                // const data = await getWordsByIdList(newWordObj.words);
-                // const listOfWords = data?.map((ele) => {
-                //     return {
-                //         id: ele.id,
-                //         word: ele.data().word
-                //     } as MiniWord;
-                // })
-                // setWords(listOfWords ?? []);
+                const data = await getWordsByIdList(newWordObj.words);
+                const listOfWords = data?.map((ele) => {
+                    return {
+                        id: ele.id,
+                        word: ele.data().word
+                    } as MiniWord;
+                })
+                setWords(listOfWords ?? []);
                 setIsLoading(false);
             } else {
                 console.log('No such document!');
@@ -88,17 +67,13 @@ function ViewWordlist() {
         if (response) {
           setIsLoading(true);
           const getWordlist = doc(firestore, `wordlists/${wordlist.id}`);
-          removeWordlistConn(words, getWordlist).then(() => {
-            deleteWordlist(getWordlist).then(() => {
-                setIsLoading(false)
-                alert('Wordlist deleted!');
-                navigate('/wordlists')
-                console.log(`Deleted wordlist with id: ${wordlist.id}!`);
-            }).catch((error) => {
-                console.log('error while deleting wordlist', error);
-            });
+          deleteWordlist(getWordlist).then(() => {
+              setIsLoading(false)
+              alert('Wordlist deleted!');
+              navigate('/wordlists')
+              console.log(`Deleted wordlist with id: ${wordlist.id}!`);
           }).catch((error) => {
-            console.log('error while removing wordlist connections', error);
+              console.log('error while deleting wordlist', error);
           });
         } else {
           console.log('Operation abort!');

@@ -88,9 +88,8 @@ const EditUser = () => {
     updateUser(
       getUser,
       {
-        name: formData.name,
+        displayName: formData.name,
         email: formData.email,
-        pwd: formData.pwd ?? localUser.pwd,
         role: formData.role,
         created_at: formValues.created_at ?? localUser.created_at,
         created_by: formValues.created_by ?? localUser.created_by,
@@ -115,7 +114,7 @@ const EditUser = () => {
   if (!found) return <h2>User not found!</h2>
   if (user?.role != 'admin') return <h2>Sorry, you are not authorized to view this page.</h2>;
   return (
-    <>
+    <div className='container'>
       <div className="p-4 box">
         <h2 className="mb-3">Update User</h2>
         {error && <Alert variant="danger">{error}</Alert>}
@@ -126,7 +125,7 @@ const EditUser = () => {
               type="name"
               placeholder="Name"
               onChange={handleChange}
-              defaultValue={localUser.name}
+              defaultValue={localUser.displayName}
             />
           </Form.Group>
 
@@ -159,14 +158,14 @@ const EditUser = () => {
             </Button>
           </div>
         </Form>
-        {submitted ? <Card className='d-flex justify-content-center align-items-center background mt-4'>
+        {submitted ? <Card className='background mt-4'>
         <Card.Body className='rounded p-4 p-sm-3'>
           <h3>Successfully updated the user!</h3>
-          <Button variant='primary' onClick={() => navigate('/home')}>Back to Home</Button>
+          <Button variant='primary' onClick={() => navigate('/users')}>Back to Users</Button>
         </Card.Body>
       </Card> : null}
       </div>
-    </>
+    </div>
   );
 };
 

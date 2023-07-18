@@ -4,15 +4,16 @@ import { Card } from 'react-bootstrap';
 import { useParams } from 'react-router-dom';
 import { Button, Form } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import { DocumentData, DocumentReference, QuerySnapshot, Timestamp, doc, getDoc, getDocs, onSnapshot, query, where } from 'firebase/firestore';
+import { DocumentData, QuerySnapshot, Timestamp, doc, getDoc, getDocs, onSnapshot, query, where } from 'firebase/firestore';
 import { NewSentenceType } from '../../types/sentence';
-import { addQuestion, addSentence, deleteQuestion, deleteSentence, getWordlist, questionsCollection, sentencesCollection, updateQuestion, updateSentence, updateWord, wordlistsCollection } from '../util/controller';
+import { addQuestion, addSentence, deleteQuestion, deleteSentence, getWordlistsByWordId, questionsCollection, sentencesCollection, setWordInWordlists, updateQuestion, updateSentence, updateWord, wordlistsCollection } from '../util/controller';
 import { auth, firestore } from '../../firebase';
 import { NewQuestionType } from '../../types/question';
 import { NewWordType } from '../../types/word';
 import { useUserAuth } from '../UserAuthContext';
-import { WordlistType } from '../../types/wordlist';
+import { MiniWordlist, WordlistType } from '../../types/wordlist';
 import Multiselect from 'multiselect-react-dropdown';
+import { astatus, rstatus, cstatus } from '../constants';
 
 const types = ['context', 'image', 'meaning', 'definition'];
 
@@ -40,28 +41,19 @@ const EditWord = () => {
   const [sentences, setSentences] = useState<NewSentenceType[]>([]);
   const [questions, setQuestions] = useState<NewQuestionType[]>([]);
   const [wordlists, setWordlists] = useState<WordlistType[]>([]);
-  const [selectedWordlists, setSelectedWordlists] = useState<DocumentReference[]>([]);
+  const [selectedWordlists, setSelectedWordlists] = useState<MiniWordlist[]>([]);
+  const [removedWordlists, setRemovedWordlists] = useState<MiniWordlist[]>([])
   const [validated, setValidated] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const {user} = useUserAuth();
 
-  let status = {
-    'creating': 'Creation in progress',
-    'created': 'Created'
-  } as object;
-  if (user.role == 'admin') {
-    status = {
-      ...status,
-      'reviewing': 'Review in progress',
-      'reviewed': 'Reviewed',
-      'active': 'Active',
-      'inactive': 'Inactive'
-    }
-  } else if (user.role == 'reviewer') {
-    status = {
-      'reviewing': 'Review in progress',
-      'reviewed': 'Reviewed'
-    }
+  let status = {} as object;
+  if (user.role === 'admin') {
+    status = astatus
+  } else if (user.role === 'reviewer') {
+    status = rstatus
+  } else if (user.role === 'creator') {
+    status = cstatus
   }
 
   const part_of_speech = [
@@ -105,17 +97,16 @@ const EditWord = () => {
           updated_at: docSnap.data().updated_at,
           created_by: docSnap.data().created_by,
           updated_by: docSnap.data().updated_by,
-          wordlists: docSnap.data().wordlists,
           ...docSnap.data(),
         };
-        console.log('Wordlists: ', newWordObj.wordlists);
-        localWlist = docSnap.data()?.wordlists === undefined ? [] : docSnap.data().wordlists.map(async (ele: DocumentReference) => {
-          const wlist = await getWordlist(ele).then((val: any) => {
-            const d = val.data();
-            setSelectedWordlists([...wordlists, d])
-          });
-          return wlist;
-        });
+        await getWordlistsByWordId(wordid ?? '').then((data) => {
+          data.map((ele) => {
+            localWlist = [...localWlist, {
+              id: ele.data().id,
+              name: ele.data().name
+            }]
+          })
+        })
         setWord(newWordObj);
         setSelectedWordlists(localWlist);
         fillFormValues(newWordObj);
@@ -176,12 +167,20 @@ const EditWord = () => {
 
   const onSelect = (selectedList: [], selectedItem: any) => {
     console.log('selected item: ', selectedItem);
+    if (removedWordlists.includes(selectedItem)) {
+      const updatedRem = removedWordlists.filter((ele) => ele != selectedItem)
+      console.log('Removed list: ', updatedRem)
+      setRemovedWordlists(updatedRem)
+    }
     setSelectedWordlists(selectedList);
   }
 
   const onRemove = (selectedList: [], removedItem: any) => {
     console.log('removed item: ', removedItem);
     setSelectedWordlists(selectedList);
+    const newRem = [...removedWordlists, removedItem]
+    console.log('new rem: ', newRem)
+    setRemovedWordlists(newRem)
   }
   
   const addNewSentence = (e: any) => {
@@ -379,6 +378,53 @@ const EditWord = () => {
     setFormValues({ ...formValues, [e.target.id]: e.target.value });
   }
 
+  const sendForReview = (e: any, type = 'review') => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    const form = e.target.form;
+    if (form.checkValidity() === false) {
+      setValidated(true);
+      return;
+    }
+
+    console.log('Validated!');
+
+    const formData = {} as any;
+    Object.keys(formValues).map((ele) => {
+      if (!ele.match(/sentence\d+/) && !ele.match(/translation\d+/) && !ele.match(/question\d+/) && !ele.match(/type\d+/) && !ele.match(/options\d+/) && !ele.match(/answer\d+/)) {
+        formData[ele] = formValues[ele];
+      }
+    });
+
+    formData['sentences'] = sentences;
+    formData['questions'] = questions;
+    formData['part_of_speech'] = formData.part_of_speech ?? 'noun'
+    if (word.status) {
+      if (type === 'review') {
+        if (['creating-english', 'feedback-english'].includes(word.status)) {
+          formData['status'] = 'review-english'
+        } else if (['creating-punjabi', 'feedback-punjabi'].includes(word.status)) {
+          formData['status'] = 'review-final'
+        }
+      } else if (type === 'approve') {
+        if (word.status === 'review-english') {
+          formData['status'] = 'creating-punjabi'
+        } else if (word.status === 'review-final') {
+          formData['status'] = 'active'
+        }
+      }
+    } else {
+      formData['status'] = 'review-english'
+    }
+    
+    // make list of docRefs from selectedWordlists
+    formData['wordlists'] = selectedWordlists.map((docu) => docu.id);
+    // console.log('Form data: ', formData);
+    console.log('Form data: ', formValues)
+    editWord(formData);
+  }
+
   const handleSubmit = (e: any) => {
     e.preventDefault();
     e.stopPropagation();
@@ -401,9 +447,7 @@ const EditWord = () => {
     formData['fSentences'] = sentences;
     formData['fQuestions'] = questions;
 
-    // make list of docRefs from selectedWordlists
-    formData['fWordlists'] = selectedWordlists.map((docu) => doc(firestore, `wordlists/${docu.id}`));
-    // console.log('Form data: ', formData);
+    setWordInWordlists(selectedWordlists, removedWordlists, wordid as string)
     editWord(formData);
   }
 
@@ -422,7 +466,7 @@ const EditWord = () => {
   // connect the below function and call in handleSubmit
   const editWord = (formData: any) => {
     setIsLoading(true);
-    const {fSentences, fQuestions, fWordlists, ...form} = formData;
+    const {fSentences, fQuestions, ...form} = formData;
 
     updateWord(
       getWord,
@@ -435,11 +479,10 @@ const EditWord = () => {
         synonyms: splitAndClear(form.synonyms) ?? [],
         antonyms: splitAndClear(form.antonyms) ?? [],
         images: splitAndClear(form.images) ?? [],
-        wordlists: fWordlists,
-        status: form.status,
-        created_at: word.created_at,
+        status: form.status ?? Object.keys(status)[0],
+        created_at: word.created_at ?? Timestamp.now(),
         updated_at: Timestamp.now(),
-        created_by: form.created_by,
+        created_by: form.created_by ?? auth.currentUser?.email,
         updated_by: auth.currentUser?.email ?? '',
         notes: form.notes ?? ''
     })
@@ -481,6 +524,7 @@ const EditWord = () => {
 
   if (isLoading) return <h2>Loading...</h2>
   if (!found) return <h2>Word not found!</h2>
+  if (!Object.keys(status).includes(word.status ?? 'creating-english')) {navigate(-1)}
   return (
     <div className='d-flex justify-content-center align-items-center background'>
       <Form className='rounded p-4 p-sm-3' hidden={submitted} noValidate validated={validated} onSubmit={handleSubmit}>
@@ -545,7 +589,7 @@ const EditWord = () => {
 
         <Form.Group className='mb-3' controlId='status' onChange={handleChange}>
           <Form.Label>Status</Form.Label>
-          <Form.Select aria-label='Default select example' defaultValue={Object.keys(status).includes(word.status ?? '') ? word.status : (user.role === 'reviewer' ? 'reviewing' : 'creating')}>
+          <Form.Select aria-label='Default select example' defaultValue={word.status}>
             {Object.entries(status).map((ele) => {
               const [key, value] = ele;
               return (
@@ -645,10 +689,22 @@ const EditWord = () => {
           <Form.Label>Notes</Form.Label>
           <Form.Control as='textarea' rows={3} placeholder='Enter notes' defaultValue={word.notes} />
         </Form.Group>
-
+        
+        <div className='d-flex justify-content-around'>
           <Button variant='primary' type='submit'>
             Submit
           </Button>
+          {word.status && ['creating-english', 'creating-punjabi', 'feedback-english', 'feedback-english'].includes(word.status) ?
+            <Button variant='primary' type='button' onClick={(e) => sendForReview(e)}>
+              Send for review
+            </Button>
+          : null}
+          {word.status && ['reviewer', 'admin'].includes(user.role) && ['review-english', 'review-final'].includes(word.status) ?
+            <Button variant='primary' type='button' onClick={(e) => sendForReview(e, 'approve')}>
+              Approve
+            </Button>
+          : null }
+        </div>
       </Form>
       {submitted ? <Card className='d-flex justify-content-center align-items-center background mt-4'>
         <Card.Body className='rounded p-4 p-sm-3'>
