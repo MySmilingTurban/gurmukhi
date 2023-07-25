@@ -66,6 +66,10 @@ form button, form h5 {
   margin: 20px 0;
 }
 
+.multiselect-container span.chip {
+  white-space: normal !important;
+}
+
 /* style for form on small devices */
 @media only screen and (max-width: 600px) {
   form {

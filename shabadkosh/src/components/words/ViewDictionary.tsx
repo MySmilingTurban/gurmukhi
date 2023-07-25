@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from 'react';
 import { Card, Button, Container, Row, Badge, ListGroup, ButtonGroup, Form } from 'react-bootstrap';
-import { deleteQuestionByWordId, deleteSentenceByWordId, deleteWord, removeWordFromWordlists, wordsCollection } from '../util/controller';
+import { deleteQuestionByWordId, deleteSentenceByWordId, deleteWord, removeWordFromSupport, removeWordFromWordlists, wordsCollection } from '../util/controller';
 import { DocumentData, QuerySnapshot, doc, onSnapshot } from 'firebase/firestore';
 import { NewWordType, Status } from '../../types/word';
 import { firestore } from '../../firebase';
@@ -13,7 +13,7 @@ function ViewDictionary() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('');
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState('all');
   const [listView, setListView] = useState<boolean>(false);
   const [words, setWords] = useState<NewWordType[]>([]);
   const [filteredWords, setFilteredWords] = useState<NewWordType[]>([]);
@@ -82,22 +82,24 @@ function ViewDictionary() {
     // } else {
     //   sortedWords = sortedWords.filter((word) => ['...'].includes(word.status ?? ''));
     // }
+    // console.log('Sorted words: ', sortedWords);
     return sortedWords;
   }
-  // console.log('Sorted words: ', sortedWords);
 
   const delWord = (word: any) => {
     // add code to remove word_id from its respective wordlist
     const response = confirm(`Are you sure you want to delete this word: ${word.word}? \n This action is not reversible.`);
     if (response) {
       const getWord = doc(firestore, `words/${word.id}`);
-      removeWordFromWordlists(word.id).then(() => {
-        deleteWord(getWord).then(() => {
-          deleteSentenceByWordId(word.id).then(() => {
-            deleteQuestionByWordId(word.id).then(() => {
-              alert('Word deleted!');
-              setIsLoading(false)
-              navigate('/words');
+      removeWordFromSupport(word.id).then(() => {
+        removeWordFromWordlists(word.id).then(() => {
+          deleteWord(getWord).then(() => {
+            deleteSentenceByWordId(word.id).then(() => {
+              deleteQuestionByWordId(word.id).then(() => {
+                alert('Word deleted!');
+                setIsLoading(false)
+                navigate('/words');
+              })
             })
           })
         })
@@ -114,12 +116,13 @@ function ViewDictionary() {
       filterList = filterList.filter((val) => (val.created_by === user.email || val.updated_by === user.email) && val.status?.includes('ing'))
     } else if (filterVal === 'updated_by_me') {
       filterList = filterList.filter((val) => val.updated_by === user.email)
+    } else if (filterVal === 'syn_or_ant') {
+      filterList = filterList.filter((val) => val.is_for_support)
     }
 
-    console.log('filter w/o status: ', filterList)
-
-    filterList = filterList.filter((val) => val.status?.includes(statusVal))
-    console.log('filtered: ', filterList, ', status: ', statusVal)
+    if (statusVal !== 'all') {
+      filterList = filterList.filter((val) => val.status?.includes(statusVal))
+    }
 
     setFilteredWords(sortWords(filterList));
   }
@@ -128,12 +131,11 @@ function ViewDictionary() {
     sortWords(filteredWords)?.map((word) => {
       const detailUrl = `/words/${word.id}`;
       const editUrl = `/words/edit/${word.id}`;
-      console.log('status: ', word.status, '\n is: ', Object.keys(statusList).includes(word.status ?? 'creating-english'))
       if (listView) {
         return (
           <ListGroup.Item
             key={word.id}
-            className='d-flex justify-content-between align-items-start'
+            className='d-flex justify-content-between align-items-center'
             style={{width: '80%'}}
             >
             <div className='ms-2 me-auto'>
@@ -143,11 +145,14 @@ function ViewDictionary() {
             <div className='d-flex flex-column align-items-end'>
               <ButtonGroup>
                 <Button href={detailUrl} style={{backgroundColor: 'transparent', border: 'transparent'}}>👁️</Button>
-                <Button href={editUrl} hidden={Object.keys(statusList).includes(word.status ?? 'creating-english')} style={{backgroundColor: 'transparent', border: 'transparent'}}>🖊️</Button>
-                <Button onClick={() => delWord(word)} style={{backgroundColor: 'transparent', border: 'transparent'}} hidden={user?.role != 'admin'}>🗑️</Button>
+                {Object.keys(statusList).includes(word.status ?? 'creating-english') ? <Button href={editUrl} style={{backgroundColor: 'transparent', border: 'transparent'}}>🖊️</Button> : null }
+                {user?.role === 'admin' ? <Button onClick={() => delWord(word)} style={{backgroundColor: 'transparent', border: 'transparent'}}>🗑️</Button> : null}
               </ButtonGroup>
-              <Badge pill bg='primary' text='white' hidden={!word.status}>
+              <Badge pill bg='primary' text='white' className='mb-2' hidden={!word.status}>
                 {word.status}
+              </Badge>
+              <Badge pill bg='primary' text='white' className='mb-2' hidden={!word.is_for_support}>
+                {'Synonym/Antonym'}
               </Badge>
             </div>
           </ListGroup.Item>
@@ -161,9 +166,14 @@ function ViewDictionary() {
               <div className='d-flex flex-row justify-content-between align-items-center'
                 style={{width: '100%'}}>
                 <Card.Title>{word.word}<br/>({word.translation})</Card.Title>
-                <Badge pill bg='primary' text='white' hidden={!word.status} style={{ alignSelf: 'flex-start' }}>
-                  {word.status}
-                </Badge>
+                <div className='d-flex flex-column align-items-end'>
+                  <Badge pill bg='primary' text='white' hidden={!word.status} className='mb-2'>
+                    {word.status}
+                  </Badge>
+                  <Badge pill bg='primary' text='white' hidden={!word.is_for_support}>
+                    {'Synonym/Antonym'}
+                  </Badge>
+                </div>
               </div>
               <ButtonGroup>
                 <Button href={detailUrl} variant='success'>View</Button>
@@ -198,20 +208,21 @@ function ViewDictionary() {
         </Form.Group>
 
         <div className='d-flex align-items-center'>
-          <Form.Group controlId='filter' onChange={(e: any) => setFilter(e.target.value ?? '')}>
+          <Form.Group controlId='filter' onChange={(e: any) => setFilter(e.target.value ?? '')} defaultValue={filter}>
             <Form.Label>Filter</Form.Label>
-            <Form.Select defaultValue={filter}>
+            <Form.Select>
               <option key={'all'} value={'all'}>Show All</option>
               <option key={'cbyme'} value={'created_by_me'}>Created by me</option>
               <option key={'amwon'} value={'am_working_on'}>I&apos;m working on</option>
               <option key={'lupme'} value={'updated_by_me'}>Last updated by me</option>
+              <option key={'synant'} value={'syn_or_ant'}>Synonyms/Antonyms</option>
             </Form.Select>
           </Form.Group>
 
           <Form.Group controlId='status' onChange={(e: any) => setStatus(e.target.value ?? '')}>
             <Form.Label>Status</Form.Label>
             <Form.Select defaultValue={status}>
-              <option key={'all'} value={''}>Show All</option>
+              <option key={'all'} value={'all'}>Show All</option>
               {Object.keys(statusList).length > 0 && Object.keys(statusList).map((ele) => {
                 const val = statusList[ele]
                 return (

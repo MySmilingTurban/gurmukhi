@@ -20,7 +20,6 @@ const AddWordlist = () => {
     useEffect(() => {
       setIsLoading(true)
       onSnapshot(wordsCollection, (snapshot: QuerySnapshot<DocumentData>) => {
-        console.log('snapshot', snapshot)
         setWords(snapshot.docs.map((doc) => {
           return {
               id: doc.id,
@@ -32,13 +31,7 @@ const AddWordlist = () => {
       setIsLoading(false);
     }, []);
 
-    const onSelect = (selectedList: [], selectedItem: any) => {
-      // console.log("Selected list: ", selectedList, ", selected item: ", selectedItem);
-      setSelectedWords(selectedList);
-    }
-
-    const onRemove = (selectedList: [], removedItem: any) => {
-      // console.log("Selected list: ", selectedList, ", removed item: ", removedItem);
+    const onMultiselectChange = (selectedList: [], item: any) => {
       setSelectedWords(selectedList);
     }
 
@@ -53,8 +46,6 @@ const AddWordlist = () => {
     const handleSubmit = (e: any) => {
         e.preventDefault();
         e.stopPropagation();
-        
-        // console.log("Form Values: ", formValues);
 
         const form = e.currentTarget;
         if (form.checkValidity() === false) {
@@ -62,12 +53,10 @@ const AddWordlist = () => {
             return;
         }
 
-        // console.log("Validated!");
         const formData = {
           ...formValues,
           words: selectedWords.map((ele) => ele.id)
         }
-        console.log('Form data: ', formData);
 
         addWordlist(formData);
     }
@@ -91,7 +80,7 @@ const AddWordlist = () => {
           notes: formData.notes ?? ''
         })
         .then((wordlist_id) => {
-          console.log('Wordlist created with ID: ', wordlist_id)
+          // console.log('Wordlist created with ID: ', wordlist_id)
         }).finally(() => {
           setIsLoading(false);
         }).catch((err) => {
@@ -129,8 +118,8 @@ const AddWordlist = () => {
                 options={words}
                 displayValue="word"
                 showCheckbox={true}
-                onSelect={onSelect}
-                onRemove={onRemove}
+                onSelect={onMultiselectChange}
+                onRemove={onMultiselectChange}
               />
             </Form.Group>
 

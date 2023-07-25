@@ -64,7 +64,6 @@ const EditWordlist = () => {
             fillFormValues(newWordObj);
             setIsLoading(false);
           } else {
-              console.log('No such document!');
               setFound(false);
               setIsLoading(false);
           }
@@ -90,21 +89,13 @@ const EditWordlist = () => {
         setFormValues({ ...formValues, [e.target.id]: e.target.value });
     }
 
-    const onSelect = (selectedList: [], selectedItem: any) => {
-      console.log('Selected list: ', selectedList, ', selected item: ', selectedItem);
-      setSelectedWords(selectedList);
-    }
-
-    const onRemove = (selectedList: [], removedItem: any) => {
-      console.log('Selected list: ', selectedList, ', removed item: ', removedItem);
+    const onMultiselectChange = (selectedList: []) => {
       setSelectedWords(selectedList);
     }
 
     const handleSubmit = (e: any) => {
         e.preventDefault();
         e.stopPropagation();
-        
-        // console.log('Form Values: ', formValues);
 
         const form = e.currentTarget;
         if (form.checkValidity() === false) {
@@ -112,7 +103,6 @@ const EditWordlist = () => {
             return;
         }
 
-        // console.log('Validated!')
         const formData = {
           id: formValues.id,
           name: formValues.name,
@@ -130,8 +120,7 @@ const EditWordlist = () => {
           notes: formValues.notes,
         }
 
-        console.log('Selected words: ', selectedWords);
-        console.log('Form data: ', formData);
+        // console.log('Selected words: ', selectedWords);
 
         editWordlist(formData)
     }
@@ -154,7 +143,8 @@ const EditWordlist = () => {
     if (isLoading) return <div>Loading...</div>
     if (!found) return <h2>Wordlist not found!</h2>;
     return (
-        <div className='d-flex justify-content-center align-items-center background container'>
+        <div className='d-flex flex-column justify-content-center align-items-center background container'>
+          <h2>Edit Wordlist</h2>
           <Form className='rounded p-4 p-sm-3' hidden={submitted} noValidate validated={validated} onSubmit={handleSubmit}>
             <Form.Group className='mb-3' controlId='name' onChange={handleChange}>
               <Form.Label>Name</Form.Label>
@@ -205,8 +195,8 @@ const EditWordlist = () => {
                 options={words}
                 displayValue='word'
                 showCheckbox={true}
-                onSelect={onSelect}
-                onRemove={onRemove}
+                onSelect={onMultiselectChange}
+                onRemove={onMultiselectChange}
                 selectedValues={selectedWords??[]}
               />
             </Form.Group>

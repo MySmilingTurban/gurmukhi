@@ -29,3 +29,5 @@ export const astatus = {
     'active': 'Active',
     'inactive': 'Inactive'
 }
+
+export const qtypes = ['context', 'image', 'meaning', 'definition'];

@@ -116,10 +116,7 @@ export function UserAuthContextProvider({ children }: { children:JSX.Element }) 
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentuser: any) => {
-      // console.log('Current user from UserAuthContext: ', currentuser);
-      if (currentuser === null) {
-        // navigate('/')
-      } else {
+      if (currentuser !== null) {
         const { uid, email } = currentuser;
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const userData = getUser(email ?? '', uid)

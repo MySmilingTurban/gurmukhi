@@ -6,8 +6,8 @@ import { MiniWord } from '../../types/word';
 import { getDoc, doc } from 'firebase/firestore';
 import { deleteWordlist, getWordsByIdList } from '../util/controller';
 import { firestore } from '../../firebase';
-import { TimestampType } from '../../types/timestamp';
 import { useUserAuth } from '../UserAuthContext';
+import { convertTimestampToDateString } from '../util/utils';
 
 function ViewWordlist() {
     const {wlid} = useParams();
@@ -44,18 +44,12 @@ function ViewWordlist() {
                 setWords(listOfWords ?? []);
                 setIsLoading(false);
             } else {
-                console.log('No such document!');
                 setFound(false);
                 setIsLoading(false);
             }
         };
         fetchWordlist();
     }, []);
-
-    function convertTimestampToDate(timestamp: TimestampType) {
-        const timestampDate = new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
-        return timestampDate.toLocaleString('en-us', { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric'});
-    }
     
     const wordsData = words?.map((ele) => {
         return (<li key={ele.id}><NavLink style={{width: '150px', border: '1px solid #000', borderRadius: 20, textAlign: 'center', margin: 5}} href={`/words/${ele.id}`} key={ele.id}>{ele.word}</NavLink></li>)
@@ -71,7 +65,6 @@ function ViewWordlist() {
               setIsLoading(false)
               alert('Wordlist deleted!');
               navigate('/wordlists')
-              console.log(`Deleted wordlist with id: ${wordlist.id}!`);
           }).catch((error) => {
               console.log('error while deleting wordlist', error);
           });
@@ -118,9 +111,9 @@ function ViewWordlist() {
                     <h5><b>Info</b></h5>
                     <div className="d-flex justify-content-between flex-column">
                         <h6>Created by: {wordlist.created_by ? wordlist.created_by : 'Unknown' }</h6>
-                        <h6>Created at: {convertTimestampToDate(wordlist.created_at)}</h6>
+                        <h6>Created at: {convertTimestampToDateString(wordlist.created_at)}</h6>
                         <h6>Last updated by: {wordlist.updated_by ? wordlist.updated_by : 'Unknown'}</h6>
-                        <h6>Last updated: {convertTimestampToDate(wordlist.updated_at)}</h6>
+                        <h6>Last updated: {convertTimestampToDateString(wordlist.updated_at)}</h6>
                     </div>
               </div>
             </div>

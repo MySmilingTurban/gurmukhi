@@ -3,8 +3,8 @@ import { Form, Table } from 'react-bootstrap';
 import { NewWordType } from '../types/word';
 import { onSnapshot, QuerySnapshot, DocumentData } from 'firebase/firestore';
 import { wordsCollection } from './util/controller';
-import { TimestampType } from '../types/timestamp';
 import { useNavigate } from 'react-router-dom';
+import { convertTimestampToDateString } from './util/utils';
 
 const Search = () => {
   const [query, setQuery] = useState('');
@@ -63,11 +63,6 @@ const Search = () => {
     setIsLoading(false);
   }, []);
 
-  function convertTimestampToDate(timestamp: TimestampType) {
-    const timestampDate = new Date(timestamp.seconds * 1000 + timestamp.nanoseconds / 1000000);
-    return timestampDate.toLocaleString('en-us', { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric'});
-  }
-
   if (isLoading) return <div>Loading...</div>;
   return (
     <div className="container m-4">
@@ -116,8 +111,8 @@ const Search = () => {
             <td>{word.meaning_punjabi}</td>
             <td>{word.meaning_english}</td>
             <td>{word.created_by}</td>
-            <td>{convertTimestampToDate(word.created_at)}</td>
-            <td>{convertTimestampToDate(word.updated_at)}</td>
+            <td>{convertTimestampToDateString(word.created_at)}</td>
+            <td>{convertTimestampToDateString(word.updated_at)}</td>
           </tr>
         ))}
       </tbody>

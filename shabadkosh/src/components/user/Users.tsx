@@ -53,7 +53,6 @@ function Users() {
       const getWord = doc(firestore, `users/${lUser.id}`);
       deleteWord(getWord).then(() => {
         alert('User deleted!');
-        console.log(`Deleted user with id: ${lUser.id}!`);
       });
     } else {
       console.log('Operation abort!');

@@ -5,20 +5,24 @@ import { auth } from '../../firebase';
 
 function Profile() {
   const [authUser, setAuthUser] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const { user } = useUserAuth();
 
   useEffect(() => {
-    auth.onAuthStateChanged((user) => {
-      if (user) {
-        setAuthUser(user);
+    setIsLoading(true);
+    auth.onAuthStateChanged((usr) => {
+      if (usr) {
+        setAuthUser(usr);
+        setIsLoading(false);
       } else {
         setAuthUser(null);
       }
-    });
+    })
   }, []);
 
   const editUrl = `/users/edit/${user.uid}`;
 
+  if (isLoading) return <h2>Loading...</h2>;
   return (
     <div className="container m-4">
       <Card>

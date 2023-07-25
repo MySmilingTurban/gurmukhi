@@ -17,18 +17,22 @@ export interface NewWordType {
     images?: string[],
     antonyms?: string[],
     synonyms?: string[],
+    sentences?: string[],
     status?: string,
     created_at: TimestampType,
     created_by: string,
     updated_at: TimestampType,
     updated_by: string,
     notes?: string,
-    wordlists?: DocumentReference[]
+    wordlists?: DocumentReference[],
+    is_for_support?: boolean
 }
 
 export interface MiniWord {
-    id: string;
-    word: string;
+    id?: string,
+    word?: string,
+    translation?: string,
+    is_for_support?: boolean
 }
 
 export interface Status {

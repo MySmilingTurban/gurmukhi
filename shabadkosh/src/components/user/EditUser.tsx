@@ -40,7 +40,6 @@ const EditUser = () => {
         fillFormValues(newUserObj);
         setIsLoading(false);
       } else {
-        console.log('No such document!');
         setFound(false);
         setIsLoading(false);
       }
@@ -77,8 +76,8 @@ const EditUser = () => {
       setValidated(true);
       return;
     }
-    console.log('Validated!');
-    console.log('Form data: ', formValues);
+
+    // console.log('Form data: ', formValues);
     editUser(formValues);
   };
 
@@ -96,8 +95,8 @@ const EditUser = () => {
         updated_at: Timestamp.now(),
         updated_by: auth.currentUser?.email
       }
-    ).then((id) => {
-      console.log('Updated user with id: ', id);
+    ).then(() => {
+      console.log('Updated user!');
     }).finally(() => {
       setIsLoading(false);
     })

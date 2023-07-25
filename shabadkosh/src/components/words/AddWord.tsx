@@ -2,23 +2,25 @@ import React, { useEffect, useState } from 'react';
 import { Button, Card, Form } from 'react-bootstrap';
 import { NewSentenceType } from '../../types/sentence';
 import { useNavigate } from 'react-router-dom';
-import { addQuestion, addSentence, addWord, addWordIdToWordlists, wordlistsCollection } from '../util/controller';
+import { addQuestion, addSentence, addWord, addWordIdToWordlists, isWordNew, wordlistsCollection, wordsCollection } from '../util/controller';
 import { DocumentData, DocumentReference, QuerySnapshot, Timestamp, onSnapshot } from 'firebase/firestore';
-import { auth } from '../../firebase';
-import { NewQuestionType } from '../../types/question';
+import { QuestionType, WordlistType, MiniWord, Option } from '../../types';
 import { useUserAuth } from '../UserAuthContext';
-import { WordlistType } from '../../types/wordlist';
 import Multiselect from 'multiselect-react-dropdown';
-import { astatus, cstatus, rstatus } from '../constants';
-
-const types = ['context', 'image', 'meaning', 'definition'];
+import { astatus, cstatus, qtypes, rstatus } from '../constants';
+import { SupportWord } from '../SupportWord';
+import { createSupportWords, seperateIdsAndNewWords, setOptionsDataForSubmit } from '../util/utils';
+import { Options } from '../Options';
 
 const AddWord = () => {
   const [formValues, setFormValues] = useState({} as any);
   const [sentences, setSentences] = useState<NewSentenceType[]>([]);
-  const [questions, setQuestions] = useState<NewQuestionType[]>([]);
+  const [questions, setQuestions] = useState<QuestionType[]>([]);
+  const [words, setWords] = useState<MiniWord[]>([]);
   const [wordlists, setWordlists] = useState<WordlistType[]>([]);
   const [selectedWordlists, setSelectedWordlists] = useState<DocumentReference[]>([]);
+  const [synonyms, setSynonyms] = useState<MiniWord[]>([]);
+  const [antonyms, setAntonyms] = useState<MiniWord[]>([]);
   const [validated, setValidated] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -46,6 +48,23 @@ const AddWord = () => {
   ]
 
   useEffect(() => {
+    setIsLoading(true)
+    onSnapshot(wordsCollection, (snapshot: QuerySnapshot<DocumentData>) => {
+      setWords(snapshot.docs.map((doc) => {
+        return {
+            id: doc.id,
+            word: doc.data().word,
+            translation: doc.data().translation,
+            value: doc.id,
+            label: doc.data().word + ` (${doc.data().translation.toLowerCase()})`
+        }
+      }))
+    })
+
+    setIsLoading(false);
+  }, [])
+
+  useEffect(() => {
     setIsLoading(true);
     onSnapshot(wordlistsCollection, (snapshot:
     QuerySnapshot<DocumentData>) => {
@@ -62,13 +81,8 @@ const AddWord = () => {
     setIsLoading(false);
   }, []);
 
-  const onSelect = (selectedList: [], selectedItem: any) => {
-    console.log('selected item: ', selectedItem);
-    setSelectedWordlists(selectedList);
-  }
-
-  const onRemove = (selectedList: [], removedItem: any) => {
-    console.log('removed item: ', removedItem);
+  const onChangeWlist = (selectedList: [], item: any) => {
+    console.log('changed item: ', item);
     setSelectedWordlists(selectedList);
   }
 
@@ -86,9 +100,6 @@ const AddWord = () => {
 
   const removeSentence = (idx: number, e: any) => {
     e.preventDefault();
-    console.log('Sentence ID: ', idx);
-    console.log('Sentences: ', sentences);
-    console.log('Sentence: ',sentences[idx]);
 
     const newSFormValues = {} as any;
     
@@ -160,9 +171,10 @@ const AddWord = () => {
       ...prevQuestions,
       {
         question: '',
-        type: '',
+        translation: '',
+        type: 'context',
         options: [],
-        answer: '',
+        answer: 0,
         word_id: '',
       },
     ]);
@@ -170,9 +182,6 @@ const AddWord = () => {
 
   const removeQuestion = (idx: number, e: any) => {
     e.preventDefault();
-    console.log('Question ID: ', idx);
-    console.log('Questions: ', questions);
-    console.log('Question: ',questions[idx]);
 
     const newSFormValues = {} as any;
     
@@ -182,17 +191,20 @@ const AddWord = () => {
       const newQuestion = {
         ...question,
         question: formValues[`question${i}`],
+        translation: formValues[`qtranslation${i}`],
         type: formValues[`type${i}`],
         options: formValues[`options${i}`],
         answer: formValues[`answer${i}`],
       };
       if (i > idx) {
         newSFormValues[`question${i - 1}`] = newQuestion.question;
+        newSFormValues[`qtranslation${i - 1}`] = newQuestion.translation;
         newSFormValues[`type${i - 1}`] = newQuestion.type;
         newSFormValues[`options${i - 1}`] = newQuestion.options;
         newSFormValues[`answer${i - 1}`] = newQuestion.answer;
       } else if (i < idx) {
         newSFormValues[`question${i}`] = newQuestion.question;
+        newSFormValues[`qtranslation${i}`] = newQuestion.translation;
         newSFormValues[`type${i}`] = newQuestion.type;
         newSFormValues[`options${i}`] = newQuestion.options;
         newSFormValues[`answer${i}`] = newQuestion.answer;
@@ -201,7 +213,7 @@ const AddWord = () => {
 
     // add other fields which are not part of questions
     for (const key in formValues) {
-      if (!key.match(/question\d+/) && !key.match(/type\d+/) && !key.match(/options\d+/) && !key.match(/answer\d+/)) {
+      if (!key.match(/question\d+/) && !key.match(/qtranslation\d+/) && !key.match(/type\d+/) && !key.match(/options\d+/) && !key.match(/answer\d+/)) {
         newSFormValues[key] = formValues[key];
       }
     }
@@ -234,6 +246,9 @@ const AddWord = () => {
       if (event.target.id.includes('question')) {
         if (parseInt(event.target.id.split('question')[1]) !== qidx) return question;
         return { ...question, question: event.target.value };
+      } else if (event.target.id.includes('qtranslation')) {
+        if (parseInt(event.target.id.split('qtranslation')[1]) !== qidx) return question;
+        return { ...question, translation: event.target.value };
       } else if (event.target.id.includes('type')) {
         if (parseInt(event.target.id.split('type')[1]) !== qidx) return question;
         return { ...question, type: event.target.value };
@@ -250,6 +265,16 @@ const AddWord = () => {
     setQuestions(updatedQuestions);
   };
 
+  const changeQOptions = (id: string, optionData: any) => {
+    // event.preventDefault()
+    const updatedQuestions = questions.map((question, qidx) => {
+      if (parseInt(id.split('options')[1]) !== qidx) return question;
+      return { ...question, options: optionData };
+    })
+    console.log('upd Q:', updatedQuestions)
+    setQuestions(updatedQuestions)
+  }
+
   const resetState = () => {
     setSentences([]);
     setQuestions([]);
@@ -258,6 +283,10 @@ const AddWord = () => {
 
   const handleChange = (e: any) => {
     setFormValues({ ...formValues, [e.target.id]: e.target.value });
+  }
+
+  const handleSupport = (e: any) => {
+    setFormValues({ ...formValues, [e.target.id]: e.target.checked })
   }
 
   const sendForReview = (e: any) => {
@@ -279,23 +308,31 @@ const AddWord = () => {
       }
     });
 
-    formData['sentences'] = sentences;
-    formData['questions'] = questions;
-    formData['part_of_speech'] = formData.part_of_speech ?? 'noun'
-    formData['status'] = formData.status ?? 'review-english'
-    
-    // make list of docRefs from selectedWordlists
-    formData['wordlists'] = selectedWordlists.map((docu) => docu.id);
-    // console.log('Form data: ', formData);
-    addNewWord(formData);
+    formData['sentences'] = sentences
+    formData['questions'] = setOptionsDataForSubmit(questions)
 
-    
-    if (e.target.form.status.value === 'creating-english') {
-      e.target.form.status.value = 'review-english'
-    }
-    console.log('Form data: ', formValues)
+    const [uniqueSyn, synIds] = seperateIdsAndNewWords(synonyms)
+    const [uniqueAnt, antIds] = seperateIdsAndNewWords(antonyms)
+
+    createSupportWords(uniqueSyn, user).then((synIdlist) => {
+      createSupportWords(uniqueAnt, user).then((antIdList) => {
+        const synArr = synIds.concat(synIdlist)
+        const antArr = antIds.concat(antIdList)
+        // console.log('Syn Ids: ', synArr)
+        // console.log('Ant Ids: ', antArr)
+
+        formData['synonyms'] = synArr;
+        formData['antonyms'] = antArr;
+        formData['part_of_speech'] = formData.part_of_speech ?? 'noun'
+        formData['status'] = 'review-english'
+        
+        // make list of docRefs from selectedWordlists
+        formData['wordlists'] = selectedWordlists.map((docu) => docu.id);
+        console.log('Form data: ', formData);
+        addNewWord(formData);
+      })
+    })
   }
-
 
   const handleSubmit = (e: any) => {
     e.preventDefault();
@@ -320,15 +357,32 @@ const AddWord = () => {
       }
     });
 
-    formData['sentences'] = sentences;
-    formData['questions'] = questions;
-    formData['part_of_speech'] = formData.part_of_speech ?? 'noun'
-    formData['status'] = formData.status ?? 'creating-english'
-    
-    // make list of docRefs from selectedWordlists
-    formData['wordlists'] = selectedWordlists.map((docu) => docu.id);
-    // console.log('Form data: ', formData);
-    addNewWord(formData);
+    formData['sentences'] = sentences
+    formData['questions'] = setOptionsDataForSubmit(questions)
+
+    const [uniqueSyn, synIds] = seperateIdsAndNewWords(synonyms)
+    const [uniqueAnt, antIds] = seperateIdsAndNewWords(antonyms)
+
+    createSupportWords(uniqueSyn, user).then((synIdlist) => {
+      createSupportWords(uniqueAnt, user).then((antIdList) => {
+          const synArr = synIds.concat(synIdlist)
+          const antArr = antIds.concat(antIdList)
+          // console.log('Syn Ids: ', synArr)
+          // console.log('Ant Ids: ', antArr)
+
+          formData['synonyms'] = synArr
+          formData['antonyms'] = antArr
+
+          formData['part_of_speech'] = formData.part_of_speech ?? 'noun'
+          formData['status'] = formData.status ?? 'creating-english'
+          
+          // make list of docRefs from selectedWordlists
+          formData['wordlists'] = selectedWordlists.map((docu) => docu.id)
+          console.log('Form data: ', formData)
+          addNewWord(formData)
+      })
+    })
+
   }
 
   const splitAndClear = (some: any) => {
@@ -340,56 +394,60 @@ const AddWord = () => {
   }
 
   // connect the below function and call in handleSubmit
-  const addNewWord = (formData: any) => {
-    setIsLoading(true);
+  const addNewWord = async (formData: any) => {
     const {sentences, questions, wordlists, ...form} = formData;
-
-    addWord({
-      word: form.word,
-      translation: form.translation,
-      meaning_punjabi: form.meaning_punjabi ?? '',
-      meaning_english: form.meaning_english ?? '',
-      part_of_speech: form.part_of_speech ?? '',
-      synonyms: splitAndClear(form.synonyms) ?? [],
-      antonyms: splitAndClear(form.antonyms) ?? [],
-      images: splitAndClear(form.images) ?? [],
-      status: form.status ?? 'creating-english',
-      created_at: Timestamp.now(),
-      updated_at: Timestamp.now(),
-      created_by: auth.currentUser?.email,
-      updated_by: auth.currentUser?.email,
-    })
-    .then((word_id) => {
-      // use return value of addWord to add sentences
-      sentences.forEach((sentence: any) => {
-        const lSentence = {...sentence, word_id};
-        const checkSentence = (sentence: NewSentenceType) => {
-          console.log(sentence);
-        };
-        checkSentence(lSentence);
-        addSentence({
-          ...sentence,
-          word_id
-        });
+    
+    const wordIsNew = await isWordNew(form.word)
+    if (wordIsNew) {
+      setIsLoading(true);
+      addWord({
+        word: form.word,
+        translation: form.translation,
+        meaning_punjabi: form.meaning_punjabi ?? '',
+        meaning_english: form.meaning_english ?? '',
+        part_of_speech: form.part_of_speech ?? '',
+        synonyms: form.synonyms,
+        antonyms: form.antonyms,
+        images: splitAndClear(form.images) ?? [],
+        status: form.status ?? 'creating-english',
+        created_at: Timestamp.now(),
+        updated_at: Timestamp.now(),
+        created_by: user.email,
+        updated_by: user.email,
+        is_for_support: form.is_for_support ?? false
       })
-
-      questions.forEach((question: any) => {
-        addQuestion({
-          ...question,
-          options: splitAndClear(question.options) ?? [],
-          type: question.type ?? 'context',
-          word_id
+      .then((word_id) => {
+        // use return value of addWord to add sentences
+        sentences.forEach((sentence: any) => {
+          addSentence({
+            ...sentence,
+            word_id
+          });
         })
+  
+        questions.forEach((question: any) => {
+          addQuestion({
+            ...question,
+            translation: question.translation ?? '',
+            options: question.options ?? [],
+            type: question.type ?? 'context',
+            word_id
+          })
+        });
+  
+        addWordIdToWordlists(wordlists, word_id)
+  
+      }).finally(() => {
+        setIsLoading(false);
       });
+  
+      resetState();
+      setSubmitted(true);
+    } else {
+      alert('Word already exists!')
+      setIsLoading(false)
+    }
 
-      addWordIdToWordlists(wordlists, word_id)
-
-    }).finally(() => {
-      setIsLoading(false);
-    });
-
-    resetState();
-    setSubmitted(true);
   }
 
   const unsetSubmitted = () => {
@@ -402,7 +460,8 @@ const AddWord = () => {
 
   if (isLoading) return <div>Loading...</div>
   return (
-    <div className='d-flex justify-content-center align-items-center background'>
+    <div className='d-flex flex-column justify-content-center align-items-center background'>
+      <h2>Add New Word</h2>
       <Form className='rounded p-4 p-sm-3' hidden={submitted} noValidate validated={validated} onSubmit={handleSubmit}>
         <Form.Group className='mb-3' controlId='word' onChange={handleChange}>
           <Form.Label>Word</Form.Label>
@@ -448,31 +507,11 @@ const AddWord = () => {
         </Form.Group>
 
         <Form.Group className='mb-3' controlId='synonyms' onChange={handleChange}>
-          <Form.Label>Synonyms</Form.Label>
-          <Form.Control type='text' placeholder='ਸਮਾਨਾਰਥੀ ਸ਼ਬਦ 1, ਸਮਾਨਾਰਥੀ ਸ਼ਬਦ 2, ...' pattern='.+[\u0A00-\u0A76,. ]' />
-          <Form.Control.Feedback type='invalid'>
-            Please enter comma-separated synonyms in Gurmukhi.
-          </Form.Control.Feedback>
+          <SupportWord id='synonyms' name='Synonyms' myVar={synonyms} setMyVar={setSynonyms} words={words} type={'synonyms'} placeholder='ਸਮਾਨਾਰਥਕ ਸ਼ਬਦ' />
         </Form.Group>
 
         <Form.Group className='mb-3' controlId='antonyms' onChange={handleChange}>
-          <Form.Label>Antonyms</Form.Label>
-          <Form.Control type='text' placeholder='ਵਿਰੋਧੀ ਸ਼ਬਦ 1, ਵਿਰੋਧੀ ਸ਼ਬਦ 2, ...' pattern='.+[\u0A00-\u0A76,. ]' />
-          <Form.Control.Feedback type='invalid'>
-            Please enter comma-separated antonyms in Gurmukhi.
-          </Form.Control.Feedback>
-        </Form.Group>
-
-        <Form.Group className='mb-3' controlId='status' onChange={handleChange}>
-          <Form.Label>Status</Form.Label>
-          <Form.Select aria-label='Default select example' defaultValue={'creating-english'}>
-            {Object.entries(status).map((ele) => {
-              const [key, value] = ele;
-              return (
-                <option key={key+value.toString()} value={key}>{value}</option>
-              );
-            })}
-          </Form.Select>
+          <SupportWord id='antonyms' name='Antonyms' myVar={antonyms} setMyVar={setAntonyms} words={words} type={'antonyms'} placeholder='ਵਿਰੋਧੀ ਸ਼ਬਦ' />
         </Form.Group>
 
         <Form.Group className='mb-3' controlId='images' onChange={handleChange}>
@@ -486,8 +525,8 @@ const AddWord = () => {
             options={wordlists}
             displayValue="name"
             showCheckbox={true}
-            onSelect={onSelect}
-            onRemove={onRemove}
+            onSelect={onChangeWlist}
+            onRemove={onChangeWlist}
           />
         </Form.Group>
 
@@ -506,12 +545,12 @@ const AddWord = () => {
                   <p>Sentence {idx+1}</p>
                   <button className='btn btn-sm' onClick={(e) => removeSentence(idx, e)}>🗑️</button>
                 </div>
-                Sentence: <Form.Control id={`sentence${idx}`} className='m-1' type='text' value={sentence.sentence} placeholder='ਇੱਥੇ ਵਾਕ ਦਰਜ ਕਰੋ' onChange={(e) => changeSentence(e)} pattern='.+[\u0A00-\u0A76,. ]' />
+                Sentence: <Form.Control id={`sentence${idx}`} className='m-1' type='text' value={sentence.sentence} placeholder='ਇੱਥੇ ਵਾਕ ਦਰਜ ਕਰੋ' onChange={(e) => changeSentence(e)} pattern='.+[\u0A00-\u0A76,.। ]' required/>
                 <Form.Control.Feedback type='invalid' itemID={`sentence${idx}`}>
                   Please enter sentence in Gurmukhi.
                 </Form.Control.Feedback>
 
-                Translation: <Form.Control id={`translation${idx}`} className='m-1' type='text' value={sentence.translation} placeholder='Enter translation' onChange={(e) => changeSentence(e)} pattern="[\u0A00-\u0A76a-zA-Z0-9,.' ]+" />
+                Translation: <Form.Control id={`translation${idx}`} className='m-1' type='text' value={sentence.translation} placeholder='Enter translation' onChange={(e) => changeSentence(e)} pattern="[\u0A00-\u0A76a-zA-Z0-9,.' ]+" required/>
                 <Form.Control.Feedback type='invalid' itemID={`translation${idx}`}>
                   Please enter translation in English.
                 </Form.Control.Feedback>
@@ -530,33 +569,50 @@ const AddWord = () => {
           </Form.Label>
           {questions && questions.length ? questions.map((question, idx) => {
             return (
-              <div key={idx} className='d-flex flex-column justify-content-between mb-3'>
-                <div className='d-flex justify-content-between'>
-                  <p>Question {idx+1}</p>
+              <div key={idx} className='d-flex flex-column justify-content-between' style={{margin: '0 5%'}}>
+                <div className='d-flex justify-content-between align-items-center'>
+                  <b>Question {idx+1}</b>
                   <button className='btn btn-sm' onClick={(e) => removeQuestion(idx, e)}>🗑️</button>
                 </div>
-                Question: <Form.Control id={`question${idx}`} className='m-1' type='text' value={question.question} placeholder='ਇੱਥੇ ਸਵਾਲ ਦਰਜ ਕਰੋ' onChange={(e) => changeQuestion(e)} pattern='.+[\u0A00-\u0A76,.].*[\s,?]*' />
-                <Form.Control.Feedback type='invalid' itemID={`question${idx}`}>
-                  Please enter question in Gurmukhi.
-                </Form.Control.Feedback>
+                <div>
+                  <Form.Label>Question:</Form.Label><Form.Control id={`question${idx}`} className='m-1' type='text' value={question.question} placeholder='ਇੱਥੇ ਸਵਾਲ ਦਰਜ ਕਰੋ' onChange={(e) => changeQuestion(e)} pattern='[\u0A00-\u0A76।,.?_ ]+' required/>
+                  <Form.Control.Feedback type='invalid' itemID={`question${idx}`}>
+                    Please enter question in Gurmukhi.
+                  </Form.Control.Feedback>
+                  <br />
 
-                Type: <Form.Select aria-label='Default select example' id={`type${idx}`} value={question.type} onChange={(e) => changeQuestion(e)}>
-                  {types.map((ele) => {
-                    return (
-                      <option key={ele} value={ele}>{ele}</option>
-                      );
+                  <Form.Label>Translation: </Form.Label><Form.Control id={`qtranslation${idx}`} className='m-1' type='text' value={question.translation} placeholder='Enter english translation of question' onChange={(e) => changeQuestion(e)} pattern="[a-zA-Z0-9,.'?_ ]+" required/>
+                  <Form.Control.Feedback type='invalid' itemID={`qtranslation${idx}`}>
+                    Please enter translation in Gurmukhi.
+                  </Form.Control.Feedback>
+                  <br />
+
+                  <Form.Label>Type: </Form.Label><Form.Select aria-label='Default select example' id={`type${idx}`} value={question.type ?? 'context'} onChange={(e) => changeQuestion(e)}>
+                    {qtypes.map((ele) => {
+                      return (
+                        <option key={ele} value={ele}>{ele}</option>
+                        );
+                      })}
+                  </Form.Select>
+
+                  <Options id={`options${idx}`} name={'Options'} myVar={question.options as Option[]} setMyVar={changeQOptions} words={words} placeholder='ਜਵਾਬ'/>
+                  <Form.Control.Feedback type='invalid' itemID={`options${idx}`}>
+                    Please choose options in Gurmukhi.
+                  </Form.Control.Feedback>
+
+                  <Form.Label>Answer: </Form.Label>
+                  <Form.Select id={`answer${idx}`} value={question.answer} onChange={(e) => changeQuestion(e)} required>
+                    {(question.options as Option[]).map((ele, i) => {
+                      return (
+                        <option key={i} value={i}>{ele.option}</option>
+                        );
                     })}
-                </Form.Select>
-
-                Options: <Form.Control id={`options${idx}`} className='m-1' type='text' placeholder='ਜਵਾਬ1, ਜਵਾਬ2, ...' value={question.options} onChange={(e) => changeQuestion(e)} pattern='.+[\u0A00-\u0A76,.].[\s,?]*' />
-                <Form.Control.Feedback type='invalid' itemID={`options${idx}`}>
-                  Please enter comma-separated options in Gurmukhi.
-                </Form.Control.Feedback>
-
-                Answer: <Form.Control id={`answer${idx}`} className='m-1' type='text' placeholder='ਜਵਾਬ' value={question.answer} onChange={(e) => changeQuestion(e)} pattern='.+[\u0A00-\u0A76,.].[\s,?]*' />
-                <Form.Control.Feedback type='invalid' itemID={`answer${idx}`}>
-                  Please enter answer in Gurmukhi.
-                </Form.Control.Feedback>
+                  </Form.Select>
+                  <Form.Control.Feedback type='invalid' itemID={`answer${idx}`}>
+                    Please choose answer
+                  </Form.Control.Feedback>
+                </div>
+                <hr />
               </div>
             );
           }): null}
@@ -567,12 +623,34 @@ const AddWord = () => {
           <Form.Control as='textarea' rows={3} placeholder='Enter notes' />
         </Form.Group>
 
+        <div className='d-flex justify-content-between align-items-center'>
+        <Form.Group className='mb-3' controlId='status' onChange={handleChange}>
+          <Form.Label>Status</Form.Label>
+          <Form.Select aria-label='Default select example' defaultValue={'creating-english'}>
+            {Object.entries(status).map((ele) => {
+              const [key, value] = ele;
+              return (
+                <option key={key+value.toString()} value={key}>{value}</option>
+              );
+            })}
+          </Form.Select>
+        </Form.Group>
+        <Form.Check
+          reverse
+          id="is_for_support"
+          type="switch"
+          onChange={handleSupport}
+          label="Is this word a synonym/antonym for another word and doesn't have its own data?"/>
+        </div>
+
+      <div className='d-flex justify-content-around'>
         <Button variant='primary' type='submit'>
           Submit
         </Button>
         <Button variant='primary' type='button' onClick={(e) => sendForReview(e)}>
           Send for review
         </Button>
+      </div>
       </Form>
       {submitted ? <Card className='d-flex justify-content-center align-items-center background'>
         <Card.Body className='rounded p-4 p-sm-3'>
@@ -587,3 +665,4 @@ const AddWord = () => {
 };
 
 export default AddWord;
+

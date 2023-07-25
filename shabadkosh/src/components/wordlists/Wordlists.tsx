@@ -44,7 +44,6 @@ function Wordlists() {
         const getWordlist = doc(firestore, `wordlists/${wordlist.id}`);
         deleteWordlist(getWordlist).then(() => {
           alert('Word deleted!');
-          console.log(`Deleted word with id: ${wordlist.id}!`);
         }).catch((error) => {
           console.log(error);
         });
@@ -60,23 +59,22 @@ function Wordlists() {
             <ListGroup.Item
               key={wordlist.id}
               className="d-flex justify-content-between align-items-start"
-              style={{width: '80%'}}
               >
               <div className="ms-2 me-auto">
                 <h3 className="fw-bold">{wordlist.name}</h3>
                 <ul>
-                    <li>Curriculum: {wordlist.metadata.curriculum}</li>
-                    <li>Level: {wordlist.metadata.level}</li>
-                    <li>{wordlist.metadata.subgroup ? `Subgroup: ${wordlist.metadata.subgroup}` : ''}</li>
+                    {wordlist.metadata.curriculum ? <li>Curriculum: {wordlist.metadata.curriculum}</li> : null}
+                    {wordlist.metadata.level ? <li>Level: {wordlist.metadata.level}</li> : null}
+                    {wordlist.metadata.subgroup ? <li>`Subgroup: ${wordlist.metadata.subgroup}` </li>: null}
                 </ul>
               </div>
               <div className="d-flex flex-column align-items-end">
                 <ButtonGroup>
-                  <Button href={viewUrl} style={{backgroundColor: 'transparent', border: 'transparent'}}>👁️</Button>
-                  <Button href={editUrl} style={{backgroundColor: 'transparent', border: 'transparent'}}>🖊️</Button>
-                  <Button onClick={() => delWordlist(wordlist)} style={{backgroundColor: 'transparent', border: 'transparent'}} hidden={user?.role != 'admin'}>🗑️</Button>
+                  <Button href={viewUrl} variant='success'>View</Button>
+                  <Button href={editUrl} variant='primary'>Edit</Button>
+                  {user?.role === 'admin' ? <Button onClick={() => delWordlist(wordlist)} variant='danger' >Delete</Button> : null }
                 </ButtonGroup>
-                <Badge pill bg="primary" text="white" hidden={!wordlist.status}>
+                <Badge pill bg="primary" text="white" hidden={!wordlist.status} className='mt-2'>
                   {wordlist.status}
                 </Badge>
               </div>
@@ -87,14 +85,16 @@ function Wordlists() {
     if (wordlists.length === 0 || isLoading) return <h2>Loading...</h2>;
     return (
         <div className='container mt-2'>
+          <div className='d-flex justify-content-between align-items-center mb-3'>
             <h2>Wordlists</h2>
             <Button href='/wordlists/new'>Add new Wordlist</Button>
-            {wordlists && wordlists.length ? (
-                <ListGroup>
-                    {wordlistsData}
-                </ListGroup>
+          </div>
+          {wordlists && wordlists.length ? (
+              <ListGroup>
+                  {wordlistsData}
+              </ListGroup>
             ) : <h2>No wordlists found. Please create one.</h2>
-            }
+          }
         </div>
     )
 }
